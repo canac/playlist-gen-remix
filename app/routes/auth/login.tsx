@@ -1,5 +1,4 @@
-import type { LoaderFunction } from 'remix';
-import { useLoaderData, json, redirect } from 'remix';
+import { useLoaderData, json, redirect, LoaderFunction } from 'remix';
 import { getUserId } from '~/middleware';
 
 type LoginData = {

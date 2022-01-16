@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import type { LoaderFunction } from 'remix';
+import { LoaderFunction } from 'remix';
 import invariant from 'tiny-invariant';
 import { commitSession, getSession } from '~/sessions.server';
 

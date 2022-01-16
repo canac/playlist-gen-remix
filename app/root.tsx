@@ -1,5 +1,6 @@
 import {
   Links,
+  LinksFunction,
   LiveReload,
   Meta,
   Outlet,
@@ -7,7 +8,6 @@ import {
   ScrollRestoration,
   useCatch,
 } from 'remix';
-import type { LinksFunction } from 'remix';
 
 import globalStylesUrl from '~/styles/global.css';
 

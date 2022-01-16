@@ -1,5 +1,4 @@
-import type { MetaFunction, LoaderFunction } from 'remix';
-import { useLoaderData, json } from 'remix';
+import { useLoaderData, json, MetaFunction, LoaderFunction } from 'remix';
 import { ensureAuthenticated } from '~/middleware';
 
 type IndexData = {
