@@ -40,5 +40,5 @@ model User {
   spotifyId   String  @unique
   accessToken String
   labels      Label[]
-  Track       Track[]
+  tracks      Track[]
 }

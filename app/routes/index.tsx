@@ -1,19 +1,36 @@
+import { PrismaClient, Track } from '@prisma/client';
 import { useLoaderData, json, MetaFunction, LoaderFunction } from 'remix';
+import TrackList from '~/components/TrackList';
 import { ensureAuthenticated } from '~/middleware';
+import { syncFavoriteTracks } from '~/spotifyApi';
 
 type IndexData = {
-  userId: number;
+  tracks: Track[];
 };
 
 export const loader: LoaderFunction = async ({ request }) => {
-  const data: IndexData = {
-    userId: await ensureAuthenticated(request),
-  };
+  // Get the user ID from the session
+  const userId = await ensureAuthenticated(request);
 
-  return json(data);
+  // Get the access token from the database
+  const prisma = new PrismaClient();
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+    select: { id: true, accessToken: true },
+  });
+  if (!user) throw new Response('User does not exist', { status: 404 });
+
+  await syncFavoriteTracks(user);
+
+  return json({
+    tracks: await prisma.track.findMany({
+      where: { userId },
+      orderBy: { dateAdded: 'desc' },
+    }),
+  });
 };
 
-export let meta: MetaFunction = () => {
+export const meta: MetaFunction = () => {
   return {
     title: 'Playlist Gen',
     description: 'Generate Spotify playlists from labeled tracks',
@@ -23,5 +40,5 @@ export let meta: MetaFunction = () => {
 export default function Index() {
   const data = useLoaderData<IndexData>();
 
-  return <pre>{data.userId}</pre>;
+  return <TrackList tracks={data.tracks}></TrackList>;
 }

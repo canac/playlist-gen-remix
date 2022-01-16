@@ -11,8 +11,14 @@ import {
 
 import globalStylesUrl from '~/styles/global.css';
 
-export let links: LinksFunction = () => {
-  return [{ rel: 'stylesheet', href: globalStylesUrl }];
+export const links: LinksFunction = () => {
+  return [
+    { rel: 'stylesheet', href: globalStylesUrl },
+    {
+      rel: 'stylesheet',
+      href: 'https://fonts.googleapis.com/css?family=Roboto:300,400,500,700&display=swap',
+    },
+  ];
 };
 
 export default function App() {
@@ -45,7 +51,7 @@ export function ErrorBoundary({ error }: { error: Error }) {
 }
 
 export function CatchBoundary() {
-  let caught = useCatch();
+  const caught = useCatch();
 
   let message;
   switch (caught.status) {
