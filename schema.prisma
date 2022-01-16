@@ -1,0 +1,40 @@
+datasource db {
+  url      = env("DATABASE_URL")
+  provider = "postgresql"
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model Track {
+  id           Int          @id @default(autoincrement())
+  spotifyId    String       @unique
+  name         String
+  artist       String
+  thumbnailUrl String
+  dateAdded    DateTime
+  labels       TrackLabel[]
+}
+
+model Label {
+  id     Int          @id @default(autoincrement())
+  userId Int
+  user   User         @relation(fields: [userId], references: [id])
+  name   String
+  tracks TrackLabel[]
+}
+
+model TrackLabel {
+  id      Int   @id @default(autoincrement())
+  trackId Int
+  track   Track @relation(fields: [trackId], references: [id])
+  labelId Int
+  label   Label @relation(fields: [labelId], references: [id])
+}
+
+model User {
+  id        Int     @id @default(autoincrement())
+  spotifyId String  @unique
+  labels    Label[]
+}
