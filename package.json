@@ -4,7 +4,7 @@
   "description": "Generate Spotify playlists from labeled tracks",
   "scripts": {
     "build": "remix build",
-    "dev": "node -r dotenv/config node_modules/.bin/remix dev",
+    "dev": "PORT=3853 node -r dotenv/config node_modules/.bin/remix dev",
     "postinstall": "remix setup node",
     "start": "remix-serve build"
   },
