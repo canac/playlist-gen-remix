@@ -34,7 +34,8 @@ model TrackLabel {
 }
 
 model User {
-  id        Int     @id @default(autoincrement())
-  spotifyId String  @unique
-  labels    Label[]
+  id          Int     @id @default(autoincrement())
+  spotifyId   String  @unique
+  accessToken String
+  labels      Label[]
 }

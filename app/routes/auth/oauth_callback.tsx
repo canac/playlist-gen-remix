@@ -1,6 +1,7 @@
 import { useEffect } from 'react';
 import { LoaderFunction } from 'remix';
 import invariant from 'tiny-invariant';
+import { PrismaClient } from '@prisma/client';
 import { commitSession, getSession } from '~/sessions.server';
 
 export const loader: LoaderFunction = async ({ request }) => {
@@ -45,11 +46,21 @@ export const loader: LoaderFunction = async ({ request }) => {
       Authorization: `Bearer ${token}`,
     },
   });
-  const { id } = await userRes.json();
+  const { id: spotifyId } = await userRes.json();
+
+  // Save the user and access token to the database
+  const prisma = new PrismaClient();
+  const { id: userId } = await prisma.user.upsert({
+    where: { spotifyId },
+    create: { spotifyId, accessToken: token },
+    update: { accessToken: token },
+    select: { id: true },
+  });
 
   // Save the user id to the session
   const session = await getSession();
-  session.set('userId', id);
+  session.set('userId', userId);
+
   return new Response('', {
     headers: {
       'Set-Cookie': await commitSession(session),

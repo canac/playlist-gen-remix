@@ -12,7 +12,7 @@ export const loader: LoaderFunction = async ({ request }) => {
   }
 
   const data: LoginData = {
-    spotifyOauthUrl: `https://accounts.spotify.com/authorize?response_type=code&client_id=${process.env.SPOTIFY_CLIENT_ID}&scope=user-read-private&redirect_uri=${process.env.DOMAIN}/auth/oauth_callback`,
+    spotifyOauthUrl: `https://accounts.spotify.com/authorize?response_type=code&client_id=${process.env.SPOTIFY_CLIENT_ID}&scope=user-library-read,user-read-private&redirect_uri=${process.env.DOMAIN}/auth/oauth_callback`,
   };
 
   return json(data);

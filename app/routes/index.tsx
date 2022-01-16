@@ -2,7 +2,7 @@ import { useLoaderData, json, MetaFunction, LoaderFunction } from 'remix';
 import { ensureAuthenticated } from '~/middleware';
 
 type IndexData = {
-  userId: string;
+  userId: number;
 };
 
 export const loader: LoaderFunction = async ({ request }) => {
