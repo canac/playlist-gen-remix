@@ -9,6 +9,8 @@ generator client {
 
 model Track {
   id           Int          @id @default(autoincrement())
+  userId       Int
+  user         User         @relation(fields: [userId], references: [id])
   spotifyId    String       @unique
   name         String
   artist       String
@@ -38,4 +40,5 @@ model User {
   spotifyId   String  @unique
   accessToken String
   labels      Label[]
+  Track       Track[]
 }
