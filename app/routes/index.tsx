@@ -2,7 +2,7 @@ import { PrismaClient, Label, Track } from '@prisma/client';
 import { useLoaderData, json, MetaFunction, LoaderFunction } from 'remix';
 import TrackList from '~/components/TrackList';
 import { ensureAuthenticated } from '~/middleware';
-import { syncFavoriteTracks } from '~/spotifyApi';
+import { syncFavoriteTracks, syncPlaylists } from '~/spotifyApi';
 
 type IndexData = {
   tracks: (Track & {
@@ -19,11 +19,11 @@ export const loader: LoaderFunction = async ({ request }) => {
   const prisma = new PrismaClient();
   const user = await prisma.user.findUnique({
     where: { id: userId },
-    select: { id: true, accessToken: true },
   });
   if (!user) throw new Response('User does not exist', { status: 404 });
 
   await syncFavoriteTracks(user);
+  await syncPlaylists(user);
 
   return json({
     tracks: await prisma.track.findMany({

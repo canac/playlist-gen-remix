@@ -7,6 +7,15 @@ generator client {
   provider = "prisma-client-js"
 }
 
+model User {
+  id          Int        @id @default(autoincrement())
+  spotifyId   String     @unique
+  accessToken String
+  labels      Label[]
+  tracks      Track[]
+  Playlist    Playlist[]
+}
+
 model Track {
   id           Int      @id @default(autoincrement())
   userId       Int
@@ -20,17 +29,19 @@ model Track {
 }
 
 model Label {
-  id     Int     @id @default(autoincrement())
-  userId Int
-  user   User    @relation(fields: [userId], references: [id])
-  name   String
-  tracks Track[]
+  id       Int       @id @default(autoincrement())
+  userId   Int
+  user     User      @relation(fields: [userId], references: [id])
+  name     String
+  tracks   Track[]
+  playlist Playlist?
 }
 
-model User {
-  id          Int     @id @default(autoincrement())
-  spotifyId   String  @unique
-  accessToken String
-  labels      Label[]
-  tracks      Track[]
+model Playlist {
+  id        Int    @id @default(autoincrement())
+  userId    Int
+  user      User   @relation(fields: [userId], references: [id])
+  spotifyId String @unique
+  labelId   Int    @unique
+  label     Label  @relation(fields: [labelId], references: [id])
 }
