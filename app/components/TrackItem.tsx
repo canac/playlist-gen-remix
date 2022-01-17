@@ -7,8 +7,9 @@ import {
   ListItemText,
   ListItemAvatar,
   TextField,
+  createFilterOptions,
 } from '@mui/material';
-import { useFetcher } from 'remix';
+import { useSubmit } from 'remix';
 import { useState } from 'react';
 
 export type TrackItemProps = {
@@ -18,10 +19,16 @@ export type TrackItemProps = {
   labels: Label[];
 };
 
+const filter = createFilterOptions<Label>();
+
+// This special id represents the id of the "Add label" fake label
+// It must be a value that is impossible in the database
+const createNewLabelId = 0;
+
 export default function TrackItem(props: TrackItemProps): JSX.Element {
   const [value, setValue] = useState(props.track.labels);
 
-  const fetcher = useFetcher();
+  const submit = useSubmit();
   const track = props.track;
 
   return (
@@ -38,34 +45,65 @@ export default function TrackItem(props: TrackItemProps): JSX.Element {
         multiple
         value={value}
         options={props.labels}
+        filterOptions={(options, params) => {
+          const filtered = filter(options, params);
+
+          // If the user has typed something that isn't the name of an existing
+          // label, add a fake label option that will allow them to create that label
+          const { inputValue } = params;
+          const isExisting = options.some(
+            (option) => inputValue === option.name,
+          );
+          if (inputValue !== '' && !isExisting) {
+            filtered.push({
+              id: createNewLabelId,
+              userId: track.userId,
+              name: inputValue,
+            });
+          }
+
+          return filtered;
+        }}
         disableCloseOnSelect
         getOptionLabel={(label) => label.name}
         isOptionEqualToValue={(option, value) => option.id === value.id}
         onChange={(event, value, reason, details) => {
           if (!details) return;
 
+          const label = details.option;
+
           if (reason === 'selectOption') {
-            fetcher.submit(
-              {
-                trackId: track.id.toString(),
-                labelId: details.option.id.toString(),
-              },
-              {
+            if (label.id === createNewLabelId) {
+              // Create the label on the server
+              const form = new URLSearchParams();
+              form.set('trackId', track.id.toString());
+              form.set('labelName', label.name);
+              submit(form, {
+                method: 'post',
+                action: '/tracks/createLabel',
+                replace: true,
+              });
+            } else {
+              // Add the label to the track on the server
+              const form = new URLSearchParams();
+              form.set('trackId', track.id.toString());
+              form.set('labelId', label.id.toString());
+              submit(form, {
                 method: 'post',
                 action: '/tracks/addLabel',
-              },
-            );
+                replace: true,
+              });
+            }
           } else if (reason === 'removeOption') {
-            fetcher.submit(
-              {
-                trackId: track.id.toString(),
-                labelId: details.option.id.toString(),
-              },
-              {
-                method: 'post',
-                action: '/tracks/removeLabel',
-              },
-            );
+            // Remove the label from the track on the server
+            const form = new URLSearchParams();
+            form.set('trackId', track.id.toString());
+            form.set('labelId', label.id.toString());
+            submit(form, {
+              method: 'post',
+              action: '/tracks/removeLabel',
+              replace: true,
+            });
           }
 
           setValue(value);
@@ -73,7 +111,7 @@ export default function TrackItem(props: TrackItemProps): JSX.Element {
         renderOption={(props, label, { selected }) => (
           <li {...props}>
             <Checkbox style={{ marginRight: 8 }} checked={selected} />
-            {label.name}
+            {label.id === createNewLabelId ? `Add "${label.name}"` : label.name}
           </li>
         )}
         style={{ width: 400 }}

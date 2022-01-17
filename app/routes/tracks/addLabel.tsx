@@ -1,8 +1,15 @@
 import { PrismaClient } from '@prisma/client';
-import { ActionFunction } from 'remix';
+import { ActionFunction, redirect } from 'remix';
 import invariant from 'tiny-invariant';
 import { ensureAuthenticated } from '~/middleware';
 
+/*
+ * Add a label to a track.
+ *
+ * Parameters:
+ *   labelId: number  The id of the label to add to the track
+ *   trackId: number  The id of the track to add the label to
+ */
 export const action: ActionFunction = async ({ request }) => {
   const userId = await ensureAuthenticated(request);
 
@@ -40,5 +47,5 @@ export const action: ActionFunction = async ({ request }) => {
     },
   });
 
-  return new Response('Success', { status: 200 });
+  return redirect('/');
 };

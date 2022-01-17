@@ -4,21 +4,19 @@ import invariant from 'tiny-invariant';
 import { ensureAuthenticated } from '~/middleware';
 
 /*
- * Remove a label from a track.
+ * Create a new label that is immediately added to an existing track.
  *
  * Parameters:
- *   labelId: number  The id of the label to remove from the track
- *   trackId: number  The id of the track to remove the label from
+ *   labelName: string  The name of the new label
+ *   trackId: number  The id of the track to add the new label to
  */
 export const action: ActionFunction = async ({ request }) => {
   const userId = await ensureAuthenticated(request);
 
-  // Extract the labelId and trackId from the form
+  // Extract the labelName and trackId from the form
   const formData = await request.formData();
-  const labelIdRaw = formData.get('labelId');
-  invariant(typeof labelIdRaw === 'string', '"labelId" must be a string');
-  const labelId = parseInt(labelIdRaw, 10);
-  invariant(!Number.isNaN(labelId), '"labelId" must contain a number');
+  const labelName = formData.get('labelName');
+  invariant(typeof labelName === 'string', '"labelName" must be a string');
 
   const trackIdRaw = formData.get('trackId');
   invariant(typeof trackIdRaw === 'string', '"trackId" must be a string');
@@ -37,12 +35,13 @@ export const action: ActionFunction = async ({ request }) => {
     });
   }
 
-  // Remove the link from the label to the track
-  await prisma.track.update({
-    where: { id: trackId },
+  // Create the label and link it to the track
+  await prisma.label.create({
     data: {
-      labels: {
-        disconnect: [{ id: labelId }],
+      name: labelName,
+      user: { connect: { id: userId } },
+      tracks: {
+        connect: [{ id: trackId }],
       },
     },
   });
