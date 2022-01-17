@@ -5,6 +5,14 @@ import { PrismaClient } from '@prisma/client';
 import { commitSession, getSession } from '~/sessions.server';
 import { z } from 'zod';
 
+// POST https://accounts.spotify.com/api/token
+// Only includes fields that we care about
+const TokenResponse = z.object({
+  access_token: z.string(),
+  refresh_token: z.string(),
+  expires_in: z.number(),
+});
+
 // GET https://api.spotify.com/v1/me
 // Only includes fields that we care about
 const ProfileResponse = z.object({
@@ -48,14 +56,16 @@ export const loader: LoaderFunction = async ({ request }) => {
       'Content-Type': 'application/x-www-form-urlencoded',
     },
   });
-
-  const { access_token: token } = await tokenRes.json();
-  invariant(typeof token === 'string', 'Expected token to be a string');
+  const {
+    access_token: accessToken,
+    refresh_token: refreshToken,
+    expires_in: expiresIn,
+  } = TokenResponse.parse(await tokenRes.json());
 
   // Use the access token to get the user's id
   const userRes = await fetch('https://api.spotify.com/v1/me', {
     headers: {
-      Authorization: `Bearer ${token}`,
+      Authorization: `Bearer ${accessToken}`,
     },
   });
   const profile = ProfileResponse.parse(await userRes.json());
@@ -65,7 +75,12 @@ export const loader: LoaderFunction = async ({ request }) => {
   const prisma = new PrismaClient();
   const updatedFields = {
     avatarUrl: profile.images[0]?.url ?? null,
-    accessToken: token,
+    accessToken,
+    refreshToken,
+    // expiresIn is the length of the token's validity in seconds
+    // Calculate the absolute time when it will expire, considering it expired a minute
+    // sooner to avoid accidentally using an expired access token
+    accessTokenExpiresAt: new Date(Date.now() + (expiresIn - 60) * 1000),
   };
   const { id: userId } = await prisma.user.upsert({
     where: { spotifyId },
