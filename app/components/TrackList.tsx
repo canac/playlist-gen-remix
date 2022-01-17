@@ -25,7 +25,6 @@ export default function TrackList(props: TrackListProps): JSX.Element {
   return (
     <List>
       {props.tracks.map((track) => {
-        const labelIds = new Set(map(track.labels, 'id'));
         return (
           <ListItem key={track.id}>
             <ListItemAvatar>
@@ -41,9 +40,8 @@ export default function TrackList(props: TrackListProps): JSX.Element {
               options={props.labels}
               disableCloseOnSelect
               getOptionLabel={(label) => label.name}
-              defaultValue={props.labels.filter((label) =>
-                labelIds.has(label.id),
-              )}
+              isOptionEqualToValue={(option, value) => option.id === value.id}
+              defaultValue={track.labels}
               onChange={(event, value, reason, details) => {
                 if (!details) return;
 
