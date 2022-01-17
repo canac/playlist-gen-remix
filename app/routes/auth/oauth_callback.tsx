@@ -3,6 +3,18 @@ import { LoaderFunction } from 'remix';
 import invariant from 'tiny-invariant';
 import { PrismaClient } from '@prisma/client';
 import { commitSession, getSession } from '~/sessions.server';
+import { z } from 'zod';
+
+// GET https://api.spotify.com/v1/me
+// Only includes fields that we care about
+const ProfileResponse = z.object({
+  id: z.string(),
+  images: z.array(
+    z.object({
+      url: z.string(),
+    }),
+  ),
+});
 
 export const loader: LoaderFunction = async ({ request }) => {
   invariant(
@@ -46,14 +58,19 @@ export const loader: LoaderFunction = async ({ request }) => {
       Authorization: `Bearer ${token}`,
     },
   });
-  const { id: spotifyId } = await userRes.json();
+  const profile = ProfileResponse.parse(await userRes.json());
+  const spotifyId = profile.id;
 
-  // Save the user and access token to the database
+  // Save the user, avatar URL, and access token to the database
   const prisma = new PrismaClient();
+  const updatedFields = {
+    avatarUrl: profile.images[0]?.url ?? null,
+    accessToken: token,
+  };
   const { id: userId } = await prisma.user.upsert({
     where: { spotifyId },
-    create: { spotifyId, accessToken: token },
-    update: { accessToken: token },
+    create: { spotifyId, ...updatedFields },
+    update: updatedFields,
     select: { id: true },
   });
 

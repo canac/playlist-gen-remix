@@ -2,20 +2,30 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
   faCloudArrowDown,
   faCloudArrowUp,
+  faUser,
 } from '@fortawesome/free-solid-svg-icons';
 import {
   AppBar,
+  Avatar,
   IconButton,
   Toolbar,
   Tooltip,
   Typography,
 } from '@mui/material';
 import { PrismaClient, Label, Track } from '@prisma/client';
-import { useLoaderData, json, MetaFunction, LoaderFunction, Form } from 'remix';
+import {
+  useLoaderData,
+  json,
+  redirect,
+  MetaFunction,
+  LoaderFunction,
+  Form,
+} from 'remix';
 import TrackList from '~/components/TrackList';
 import { ensureAuthenticated } from '~/middleware';
 
 type IndexData = {
+  avatarUrl: string | null;
   tracks: (Track & {
     labels: Label[];
   })[];
@@ -30,20 +40,22 @@ export const loader: LoaderFunction = async ({ request }) => {
   const prisma = new PrismaClient();
   const user = await prisma.user.findUnique({
     where: { id: userId },
+    include: {
+      tracks: {
+        include: { labels: true },
+        take: 10,
+      },
+      labels: true,
+    },
   });
-  if (!user) throw new Response('User does not exist', { status: 404 });
+  if (user === null) {
+    throw redirect('/auth/login');
+  }
 
   return json({
-    tracks: await prisma.track.findMany({
-      where: { userId },
-      orderBy: { dateAdded: 'desc' },
-      include: { labels: true },
-      take: 10,
-    }),
-    labels: await prisma.label.findMany({
-      where: { userId },
-      orderBy: { name: 'asc' },
-    }),
+    avatarUrl: user.avatarUrl,
+    tracks: user.tracks,
+    labels: user.labels,
   });
 };
 
@@ -78,6 +90,13 @@ export default function Index() {
               </IconButton>
             </Tooltip>
           </Form>
+          <IconButton size="large" color="inherit">
+            {data.avatarUrl ? (
+              <Avatar alt="User avatar" src={data.avatarUrl} />
+            ) : (
+              <FontAwesomeIcon icon={faUser} />
+            )}
+          </IconButton>
         </Toolbar>
       </AppBar>
       <TrackList tracks={data.tracks} labels={data.labels}></TrackList>

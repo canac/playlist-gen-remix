@@ -10,10 +10,11 @@ generator client {
 model User {
   id          Int        @id @default(autoincrement())
   spotifyId   String     @unique
+  avatarUrl   String?
   accessToken String
   labels      Label[]
   tracks      Track[]
-  Playlist    Playlist[]
+  playlist    Playlist[]
 }
 
 model Track {
