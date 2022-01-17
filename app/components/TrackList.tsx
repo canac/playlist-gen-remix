@@ -10,6 +10,7 @@ import {
   TextField,
 } from '@mui/material';
 import { map } from 'lodash';
+import { useFetcher } from 'remix';
 
 export type TrackListProps = {
   tracks: (Track & {
@@ -19,6 +20,8 @@ export type TrackListProps = {
 };
 
 export default function TrackList(props: TrackListProps): JSX.Element {
+  const fetcher = useFetcher();
+
   return (
     <List>
       {props.tracks.map((track) => {
@@ -44,10 +47,28 @@ export default function TrackList(props: TrackListProps): JSX.Element {
               onChange={(event, value, reason, details) => {
                 if (!details) return;
 
-                if (reason === 'removeOption') {
-                  console.log('removed', details.option);
-                } else if (reason === 'selectOption') {
-                  console.log('added', details.option);
+                if (reason === 'selectOption') {
+                  fetcher.submit(
+                    {
+                      trackId: track.id.toString(),
+                      labelId: details.option.id.toString(),
+                    },
+                    {
+                      method: 'post',
+                      action: '/tracks/addLabel',
+                    },
+                  );
+                } else if (reason === 'removeOption') {
+                  fetcher.submit(
+                    {
+                      trackId: track.id.toString(),
+                      labelId: details.option.id.toString(),
+                    },
+                    {
+                      method: 'post',
+                      action: '/tracks/removeLabel',
+                    },
+                  );
                 }
               }}
               renderOption={(props, label, { selected }) => (
