@@ -8,6 +8,7 @@ type IndexData = {
   tracks: (Track & {
     labels: Label[];
   })[];
+  labels: Label[];
 };
 
 export const loader: LoaderFunction = async ({ request }) => {
@@ -29,6 +30,11 @@ export const loader: LoaderFunction = async ({ request }) => {
       where: { userId },
       orderBy: { dateAdded: 'desc' },
       include: { labels: true },
+      take: 10,
+    }),
+    labels: await prisma.label.findMany({
+      where: { userId },
+      orderBy: { name: 'asc' },
     }),
   });
 };
@@ -43,5 +49,5 @@ export const meta: MetaFunction = () => {
 export default function Index() {
   const data = useLoaderData<IndexData>();
 
-  return <TrackList tracks={data.tracks}></TrackList>;
+  return <TrackList tracks={data.tracks} labels={data.labels}></TrackList>;
 }
