@@ -1,3 +1,4 @@
+import { PrismaClient, User } from '@prisma/client';
 import { redirect } from 'remix';
 import { getSession } from '~/sessions.server';
 
@@ -19,4 +20,24 @@ export async function ensureAuthenticated(request: Request): Promise<number> {
   }
 
   return userId;
+}
+
+// Ensure the the user is authenticated and represents a valid user
+// Return the user's model if they are logged in
+// Throw a redirect to the login page if they aren't
+export async function ensureUser(request: Request): Promise<User> {
+  const userId = await getUserId(request);
+  if (userId === null) {
+    throw redirect('/auth/login');
+  }
+
+  const prisma = new PrismaClient();
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+  });
+  if (user === null) {
+    throw redirect('/auth/login');
+  }
+
+  return user;
 }
