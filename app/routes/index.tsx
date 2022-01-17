@@ -7,7 +7,10 @@ import {
 import {
   AppBar,
   Avatar,
+  Button,
   IconButton,
+  Menu,
+  MenuItem,
   Toolbar,
   Tooltip,
   Typography,
@@ -21,6 +24,7 @@ import {
   LoaderFunction,
   Form,
 } from 'remix';
+import React, { useState } from 'react';
 import TrackList from '~/components/TrackList';
 import { ensureAuthenticated } from '~/middleware';
 
@@ -69,6 +73,14 @@ export const meta: MetaFunction = () => {
 export default function Index() {
   const data = useLoaderData<IndexData>();
 
+  const [anchorEl, setAnchorEl] = useState<HTMLElement | null>(null);
+  const openMenu = (event: React.MouseEvent<HTMLElement>) => {
+    setAnchorEl(event.currentTarget);
+  };
+  const closeMenu = () => {
+    setAnchorEl(null);
+  };
+
   return (
     <>
       <AppBar position="static">
@@ -90,13 +102,34 @@ export default function Index() {
               </IconButton>
             </Tooltip>
           </Form>
-          <IconButton size="large" color="inherit">
+          <IconButton size="large" color="inherit" onClick={openMenu}>
             {data.avatarUrl ? (
               <Avatar alt="User avatar" src={data.avatarUrl} />
             ) : (
               <FontAwesomeIcon icon={faUser} />
             )}
           </IconButton>
+          <Menu
+            sx={{ mt: '56px' }}
+            anchorEl={anchorEl}
+            anchorOrigin={{
+              vertical: 'top',
+              horizontal: 'right',
+            }}
+            keepMounted
+            transformOrigin={{
+              vertical: 'top',
+              horizontal: 'right',
+            }}
+            open={Boolean(anchorEl)}
+            onClose={closeMenu}
+          >
+            <MenuItem onClick={closeMenu}>
+              <Form action="/auth/logout" method="post">
+                <Button type="submit">Logout</Button>
+              </Form>
+            </MenuItem>
+          </Menu>
         </Toolbar>
       </AppBar>
       <TrackList tracks={data.tracks} labels={data.labels}></TrackList>
