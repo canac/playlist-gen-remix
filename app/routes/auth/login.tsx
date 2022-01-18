@@ -1,12 +1,12 @@
 import { useLoaderData, json, redirect, LoaderFunction } from 'remix';
-import { getUserId } from '~/middleware';
+import { getUser } from '~/middleware';
 
 type LoginData = {
   spotifyOauthUrl: string;
 };
 
 export const loader: LoaderFunction = async ({ request }) => {
-  if ((await getUserId(request)) !== null) {
+  if ((await getUser(request)) !== null) {
     // Redirect to the home page if the user is already logged in
     return redirect('/');
   }
