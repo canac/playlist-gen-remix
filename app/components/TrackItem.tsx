@@ -68,11 +68,9 @@ export default function TrackItem(props: TrackItemProps): JSX.Element {
         getOptionLabel={(label) => label.name}
         isOptionEqualToValue={(option, value) => option.id === value.id}
         onChange={(event, value, reason, details) => {
-          if (!details) return;
+          const label = details?.option;
 
-          const label = details.option;
-
-          if (reason === 'selectOption') {
+          if (label && reason === 'selectOption') {
             if (label.id === createNewLabelId) {
               // Create the label on the server
               const form = new URLSearchParams();
@@ -94,7 +92,7 @@ export default function TrackItem(props: TrackItemProps): JSX.Element {
                 replace: true,
               });
             }
-          } else if (reason === 'removeOption') {
+          } else if (label && reason === 'removeOption') {
             // Remove the label from the track on the server
             const form = new URLSearchParams();
             form.set('trackId', track.id.toString());
@@ -102,6 +100,15 @@ export default function TrackItem(props: TrackItemProps): JSX.Element {
             submit(form, {
               method: 'post',
               action: '/tracks/removeLabel',
+              replace: true,
+            });
+          } else if (reason === 'clear') {
+            // Clear all labels from the track
+            const form = new URLSearchParams();
+            form.set('trackId', track.id.toString());
+            submit(form, {
+              method: 'post',
+              action: '/tracks/clearLabels',
               replace: true,
             });
           }

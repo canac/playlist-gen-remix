@@ -37,7 +37,7 @@ export const action: ActionFunction = async ({ request }) => {
     });
   }
 
-  // Remove the link from the label to the track
+  // Remove the link from the track to the label
   await prisma.track.update({
     where: { id: trackId },
     data: {
