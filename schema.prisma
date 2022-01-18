@@ -28,16 +28,18 @@ model Track {
   artist       String
   thumbnailUrl String
   dateAdded    DateTime
+  explicit     Boolean
   labels       Label[]
 }
 
 model Label {
-  id       Int       @id @default(autoincrement())
-  userId   Int
-  user     User      @relation(fields: [userId], references: [id])
-  name     String
-  tracks   Track[]
-  playlist Playlist?
+  id            Int       @id @default(autoincrement())
+  userId        Int
+  user          User      @relation(fields: [userId], references: [id])
+  name          String
+  tracks        Track[]
+  smartCriteria String?
+  playlist      Playlist?
 }
 
 model Playlist {

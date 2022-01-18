@@ -60,11 +60,13 @@ export const loader: LoaderFunction = async ({ request }) => {
     where: { id: userId },
     include: {
       tracks: {
-        include: { labels: true },
+        // Hide smart labels
+        include: { labels: { where: { smartCriteria: null } } },
         skip: trackPage * trackPageSize,
         take: trackPageSize,
       },
-      labels: true,
+      // Hide smart labels
+      labels: { where: { smartCriteria: null } },
     },
   });
   if (user === null) {

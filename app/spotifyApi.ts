@@ -99,6 +99,7 @@ const TracksResponse = z.object({
           }),
         ),
         id: z.string(),
+        explicit: z.boolean(),
         name: z.string(),
       }),
     }),
@@ -128,6 +129,7 @@ export async function syncFavoriteTracks(user: User): Promise<void> {
       artist: item.track.artists.map((artist) => artist.name).join(' & '),
       thumbnailUrl: item.track.album.images[0].url,
       dateAdded: item.added_at,
+      explicit: item.track.explicit,
     }));
 
     // See if any of those tracks are already in the database
@@ -201,19 +203,39 @@ export async function syncPlaylists(user: User): Promise<void> {
     });
   }
 
+  const allTracks = await prisma.track.findMany({
+    where: { userId: user.id },
+    select: { spotifyId: true, explicit: true },
+  });
+
   const dbPlaylists = await prisma.playlist.findMany({
     where: { userId: user.id },
-    include: { label: { include: { tracks: true } } },
+    include: {
+      label: {
+        include: {
+          tracks: { select: { spotifyId: true } },
+        },
+      },
+    },
   });
   for (const playlist of dbPlaylists) {
     const dummyTrackSpotifyId = '41MCdlvXOl62B7Kv86Bb1v';
+
+    let tracks = playlist.label.tracks;
+
+    // Override the tracks for smart labels
+    if (playlist.label.smartCriteria === 'clean') {
+      tracks = allTracks.filter((track) => !track.explicit);
+    } else if (playlist.label.smartCriteria === 'explicit') {
+      tracks = allTracks.filter((track) => track.explicit);
+    }
 
     // Replace the tracks in the Spotify playlist with the new tracks
     // If the playlist needs to be cleared without any new tracks put into it, it is more
     // efficient to replace the entire playlist with a single song and then remove it than
     // to query the playlist for all of it's ids, possibly in multiple batches, and then
     // remove all of those ids, possibly in multiple batches
-    const trackSpotifyIds = map(playlist.label.tracks, 'spotifyId');
+    const trackSpotifyIds = map(tracks, 'spotifyId');
     console.log(trackSpotifyIds);
     for (const [index, spotifyIds] of chunk(
       trackSpotifyIds.length > 0 ? trackSpotifyIds : [dummyTrackSpotifyId],
