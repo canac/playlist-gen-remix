@@ -9,8 +9,8 @@ import {
   TextField,
   createFilterOptions,
 } from '@mui/material';
-import { useSubmit } from 'remix';
-import { useState } from 'react';
+import { useSubmit, useFetcher } from 'remix';
+import { useEffect, useState } from 'react';
 
 export type TrackItemProps = {
   track: Track & {
@@ -26,10 +26,17 @@ const filter = createFilterOptions<Label>();
 const createNewLabelId = 0;
 
 export default function TrackItem(props: TrackItemProps): JSX.Element {
-  const [value, setValue] = useState(props.track.labels);
+  const track = props.track;
+
+  const [labelsState, setLabels] = useState(props.track.labels);
+
+  // Automatically update the tracks' labels whenever they are changed by the server
+  useEffect(() => {
+    setLabels(props.track.labels);
+  }, [props.track.labels]);
 
   const submit = useSubmit();
-  const track = props.track;
+  const fetcher = useFetcher();
 
   return (
     <ListItem>
@@ -43,7 +50,7 @@ export default function TrackItem(props: TrackItemProps): JSX.Element {
       <ListItemText primary={track.name} secondary={track.artist} />
       <Autocomplete
         multiple
-        value={value}
+        value={labelsState}
         options={props.labels}
         filterOptions={(options, params) => {
           const filtered = filter(options, params);
@@ -76,11 +83,16 @@ export default function TrackItem(props: TrackItemProps): JSX.Element {
               const form = new URLSearchParams();
               form.set('trackId', track.id.toString());
               form.set('labelName', label.name);
-              submit(form, {
+              fetcher.submit(form, {
                 method: 'post',
                 action: '/tracks/createLabel',
                 replace: true,
               });
+
+              // Don't call setLabels because then labelsState will include the new label
+              // sentinel value, which causes issues because it doesn't have an id that
+              // matches an existing label
+              return;
             } else {
               // Add the label to the track on the server
               const form = new URLSearchParams();
@@ -113,7 +125,7 @@ export default function TrackItem(props: TrackItemProps): JSX.Element {
             });
           }
 
-          setValue(value);
+          setLabels(value);
         }}
         renderOption={(props, label, { selected }) => (
           <li {...props}>
