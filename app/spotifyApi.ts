@@ -205,7 +205,7 @@ export async function syncPlaylists(user: User): Promise<void> {
 
   const allTracks = await prisma.track.findMany({
     where: { userId: user.id },
-    select: { spotifyId: true, explicit: true },
+    select: { dateAdded: true, spotifyId: true, explicit: true },
   });
 
   const dbPlaylists = await prisma.playlist.findMany({
@@ -224,10 +224,29 @@ export async function syncPlaylists(user: User): Promise<void> {
     let tracks = playlist.label.tracks;
 
     // Override the tracks for smart labels
-    if (playlist.label.smartCriteria === 'clean') {
-      tracks = allTracks.filter((track) => !track.explicit);
-    } else if (playlist.label.smartCriteria === 'explicit') {
-      tracks = allTracks.filter((track) => track.explicit);
+    const { smartCriteria } = playlist.label;
+    if (smartCriteria) {
+      tracks = (() => {
+        if (smartCriteria === 'clean') {
+          return allTracks.filter((track) => !track.explicit);
+        }
+
+        if (smartCriteria === 'explicit') {
+          return allTracks.filter((track) => track.explicit);
+        }
+
+        const yearMatches = /^year:(?<year>\d+)$/.exec(smartCriteria);
+        if (yearMatches?.groups) {
+          const year = parseInt(yearMatches.groups.year, 10);
+          return allTracks.filter(
+            (track) => track.dateAdded.getUTCFullYear() === year,
+          );
+        }
+
+        throw new Response(`Invalid smart criteria "${smartCriteria}"`, {
+          status: 500,
+        });
+      })();
     }
 
     // Replace the tracks in the Spotify playlist with the new tracks
