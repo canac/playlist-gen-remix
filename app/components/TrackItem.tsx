@@ -9,7 +9,7 @@ import {
   TextField,
   createFilterOptions,
 } from '@mui/material';
-import { useSubmit, useFetcher } from 'remix';
+import { useFetcher } from 'remix';
 import { useEffect, useState } from 'react';
 
 export type TrackItemProps = {
@@ -35,7 +35,6 @@ export default function TrackItem(props: TrackItemProps): JSX.Element {
     setLabels(props.track.labels);
   }, [props.track.labels]);
 
-  const submit = useSubmit();
   const fetcher = useFetcher();
 
   return (
@@ -98,7 +97,7 @@ export default function TrackItem(props: TrackItemProps): JSX.Element {
               const form = new URLSearchParams();
               form.set('trackId', track.id.toString());
               form.set('labelId', label.id.toString());
-              submit(form, {
+              fetcher.submit(form, {
                 method: 'post',
                 action: '/tracks/addLabel',
                 replace: true,
@@ -109,7 +108,7 @@ export default function TrackItem(props: TrackItemProps): JSX.Element {
             const form = new URLSearchParams();
             form.set('trackId', track.id.toString());
             form.set('labelId', label.id.toString());
-            submit(form, {
+            fetcher.submit(form, {
               method: 'post',
               action: '/tracks/removeLabel',
               replace: true,
@@ -118,7 +117,7 @@ export default function TrackItem(props: TrackItemProps): JSX.Element {
             // Clear all labels from the track
             const form = new URLSearchParams();
             form.set('trackId', track.id.toString());
-            submit(form, {
+            fetcher.submit(form, {
               method: 'post',
               action: '/tracks/clearLabels',
               replace: true,

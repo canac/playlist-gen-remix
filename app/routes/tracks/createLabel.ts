@@ -1,5 +1,5 @@
 import { PrismaClient } from '@prisma/client';
-import { ActionFunction, redirect } from 'remix';
+import { ActionFunction, json } from 'remix';
 import invariant from 'tiny-invariant';
 import { ensureAuthenticated } from '~/middleware';
 
@@ -36,7 +36,7 @@ export const action: ActionFunction = async ({ request }) => {
   }
 
   // Create the label and link it to the track
-  await prisma.label.create({
+  const { id } = await prisma.label.create({
     data: {
       name: labelName,
       user: { connect: { id: userId } },
@@ -46,5 +46,5 @@ export const action: ActionFunction = async ({ request }) => {
     },
   });
 
-  return redirect('/');
+  return json({ success: true, id });
 };

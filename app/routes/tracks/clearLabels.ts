@@ -1,5 +1,5 @@
 import { PrismaClient } from '@prisma/client';
-import { ActionFunction, redirect } from 'remix';
+import { ActionFunction, json } from 'remix';
 import invariant from 'tiny-invariant';
 import { ensureAuthenticated } from '~/middleware';
 
@@ -43,5 +43,5 @@ export const action: ActionFunction = async ({ request }) => {
     },
   });
 
-  return redirect('/');
+  return json({ success: true });
 };
