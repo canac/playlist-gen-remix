@@ -94,6 +94,8 @@ export const meta: MetaFunction = () => {
 export default function Index() {
   const data = useLoaderData<IndexData>();
 
+  const [page] = React.useState(data.pageIndex + 1);
+
   const [anchorEl, setAnchorEl] = useState<HTMLElement | null>(null);
   const openMenu = (event: React.MouseEvent<HTMLElement>) => {
     setAnchorEl(event.currentTarget);
@@ -159,7 +161,7 @@ export default function Index() {
       >
         <Pagination
           count={data.pageCount}
-          defaultPage={data.pageIndex + 1}
+          defaultPage={page}
           shape="rounded"
           color="primary"
           size="large"
