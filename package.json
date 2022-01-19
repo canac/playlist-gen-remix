@@ -6,7 +6,8 @@
     "build": "remix build",
     "dev": "PORT=3853 node -r dotenv/config node_modules/.bin/remix dev",
     "postinstall": "remix setup node",
-    "start": "remix-serve build"
+    "start": "remix-serve build",
+    "grammar-gen": "nearleyc labelGrammar.ne > app/labelGrammar.ts"
   },
   "dependencies": {
     "@emotion/react": "^11.7.1",
@@ -20,6 +21,8 @@
     "@remix-run/serve": "^1.1.1",
     "dotenv": "^12.0.4",
     "lodash": "^4.17.21",
+    "moo": "^0.5.1",
+    "nearley": "^2.20.1",
     "react": "^17.0.2",
     "react-dom": "^17.0.2",
     "remix": "^1.1.1",
@@ -29,6 +32,7 @@
   "devDependencies": {
     "@remix-run/dev": "^1.1.1",
     "@types/lodash": "^4.14.178",
+    "@types/nearley": "^2.11.2",
     "@types/react": "^17.0.38",
     "@types/react-dom": "^17.0.11",
     "typescript": "^4.5.4"
