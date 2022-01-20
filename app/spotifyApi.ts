@@ -14,17 +14,15 @@ const parser = new Parser(Grammar.fromCompiled(grammar));
 // and retrying failures due to an expired access token
 // Return the response body JSON
 async function spotifyFetch(user: User, req: Request): Promise<unknown> {
-  let { accessToken } = user;
-
   if (new Date() > user.accessTokenExpiresAt) {
     // The access token is expired, so preemptively refresh it
     console.log('Expired access token, retrying...');
-    accessToken = (await refreshAccessToken(user)).accessToken;
+    await refreshAccessToken(user);
   }
 
   // Add the authorization headers to the provided request
   const authorizedReq = new Request(req.url, req);
-  authorizedReq.headers.set('Authorization', `Bearer ${accessToken}`);
+  authorizedReq.headers.set('Authorization', `Bearer ${user.accessToken}`);
   authorizedReq.headers.set('Accept', 'application/json');
 
   console.log(`${req.method} ${req.url}`);
@@ -48,9 +46,8 @@ const TokenResponse = z.object({
   expires_in: z.number(),
 });
 
-// Get the user a new Spotify access token
-// Return the User with the new access token
-async function refreshAccessToken(user: User): Promise<User> {
+// Get the user a new Spotify access token, updating the provided user object
+async function refreshAccessToken(user: User): Promise<void> {
   // Exchange the refresh token for an access token
   const body = new URLSearchParams();
   body.append('grant_type', 'refresh_token');
@@ -81,7 +78,7 @@ async function refreshAccessToken(user: User): Promise<User> {
     where: { id: user.id },
     data: modifiedFields,
   });
-  return { ...user, ...modifiedFields };
+  Object.assign(user, modifiedFields);
 }
 
 // GET https://api.spotify.com/v1/me/tracks
