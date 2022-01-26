@@ -33,7 +33,7 @@ export const loader: LoaderFunction = async ({ request }) => {
   // Pages in the query string are 1-index, but we need a 0-indexed
   const trackPage = Number.isNaN(qsPage) ? 0 : qsPage - 1;
 
-  // Get the access token from the database
+  // Get the user and their tracks and labels from the database
   const prisma = new PrismaClient();
   const user = await prisma.user.findUnique({
     where: { id: userId },
