@@ -1,6 +1,6 @@
 import { PrismaClient } from '@prisma/client';
 import { ActionFunction, json } from 'remix';
-import invariant from 'tiny-invariant';
+import { extractIntFromFormData } from '~/lib/helpers';
 import { ensureAuthenticated } from '~/middleware';
 
 /*
@@ -15,15 +15,8 @@ export const action: ActionFunction = async ({ request }) => {
 
   // Extract the labelId and trackId from the form
   const formData = await request.formData();
-  const labelIdRaw = formData.get('labelId');
-  invariant(typeof labelIdRaw === 'string', '"labelId" must be a string');
-  const labelId = parseInt(labelIdRaw, 10);
-  invariant(!Number.isNaN(labelId), '"labelId" must contain a number');
-
-  const trackIdRaw = formData.get('trackId');
-  invariant(typeof trackIdRaw === 'string', '"trackId" must be a string');
-  const trackId = parseInt(trackIdRaw, 10);
-  invariant(!Number.isNaN(trackId), '"trackId" must contain a number');
+  const labelId = extractIntFromFormData(formData, 'labelId');
+  const trackId = extractIntFromFormData(formData, 'trackId');
 
   const prisma = new PrismaClient();
   const track = await prisma.track.findUnique({
