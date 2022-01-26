@@ -65,6 +65,7 @@ export default function TrackItem(props: TrackItemProps): JSX.Element {
               id: createNewLabelId,
               userId: track.userId,
               name: inputValue,
+              smartCriteria: null,
             });
           }
 
