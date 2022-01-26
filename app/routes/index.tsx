@@ -46,15 +46,16 @@ export const loader: LoaderFunction = async ({ request }) => {
       },
       // Hide smart labels
       labels: { where: { smartCriteria: null } },
+      _count: {
+        select: { tracks: true },
+      },
     },
   });
   if (user === null) {
     throw redirect('/auth/login');
   }
 
-  const numTrackPages = Math.ceil(
-    (await prisma.track.count({ where: { userId } })) / trackPageSize,
-  );
+  const numTrackPages = Math.ceil(user._count.tracks / trackPageSize);
 
   return json({
     tracks: user.tracks,
