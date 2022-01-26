@@ -46,6 +46,7 @@ export const loader: LoaderFunction = async ({ request }) => {
       tracks: {
         // Hide smart labels
         include: { labels: { where: { smartCriteria: null } } },
+        orderBy: [{ dateAdded: 'desc' }],
         skip: trackPage * trackPageSize,
         take: trackPageSize,
       },
