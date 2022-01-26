@@ -1,3 +1,28 @@
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import {
+  faCloudArrowDown,
+  faCloudArrowUp,
+  faUser,
+} from '@fortawesome/free-solid-svg-icons';
+import {
+  AppBar,
+  Avatar,
+  Button,
+  IconButton,
+  Menu,
+  MenuItem,
+  Toolbar,
+  Tooltip,
+  Typography,
+} from '@mui/material';
+import {
+  useLoaderData,
+  json,
+  Form,
+  LoaderFunction,
+} from 'remix';
+import React, { useState } from 'react';
+import { ensureUser } from '~/middleware';
 import {
   Links,
   LinksFunction,
@@ -10,6 +35,10 @@ import {
 } from 'remix';
 
 import globalStylesUrl from '~/styles/global.css';
+
+type RootData = {
+  avatarUrl: string | null;
+};
 
 export const links: LinksFunction = () => {
   return [
@@ -111,12 +140,78 @@ function Document({
   );
 }
 
+export const loader: LoaderFunction = async ({ request }) => {
+  // Get the user from the session
+  const user = await ensureUser(request);
+
+  return json({
+    avatarUrl: user.avatarUrl,
+  });
+};
+
 function Layout({ children }: { children: React.ReactNode }) {
+  const data = useLoaderData<RootData>();
+
+  const [anchorEl, setAnchorEl] = useState<HTMLElement | null>(null);
+  const openMenu = (event: React.MouseEvent<HTMLElement>) => {
+    setAnchorEl(event.currentTarget);
+  };
+  const closeMenu = () => {
+    setAnchorEl(null);
+  };
+
   return (
     <div className="remix-app">
-      <div className="remix-app__main">
-        <div className="container remix-app__main-content">{children}</div>
-      </div>
+      <AppBar position="sticky">
+        <Toolbar>
+          <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
+            Playlist Generator
+          </Typography>
+          <Form action="/sync/pullTracks" method="post" replace>
+            <Tooltip title="Pull tracks from Spotify">
+              <IconButton type="submit" size="large" color="inherit">
+                <FontAwesomeIcon icon={faCloudArrowDown} />
+              </IconButton>
+            </Tooltip>
+          </Form>
+          <Form action="/sync/pushTracks" method="post" replace>
+            <Tooltip title="Push playlists to Spotify">
+              <IconButton type="submit" size="large" color="inherit">
+                <FontAwesomeIcon icon={faCloudArrowUp} />
+              </IconButton>
+            </Tooltip>
+          </Form>
+          <IconButton size="large" color="inherit" onClick={openMenu}>
+            {data.avatarUrl ? (
+              <Avatar alt="User avatar" src={data.avatarUrl} />
+            ) : (
+              <FontAwesomeIcon icon={faUser} />
+            )}
+          </IconButton>
+          <Menu
+            sx={{ mt: '56px' }}
+            anchorEl={anchorEl}
+            anchorOrigin={{
+              vertical: 'top',
+              horizontal: 'right',
+            }}
+            keepMounted
+            transformOrigin={{
+              vertical: 'top',
+              horizontal: 'right',
+            }}
+            open={Boolean(anchorEl)}
+            onClose={closeMenu}
+          >
+            <MenuItem onClick={closeMenu}>
+              <Form action="/auth/logout" method="post">
+                <Button type="submit">Logout</Button>
+              </Form>
+            </MenuItem>
+          </Menu>
+        </Toolbar>
+      </AppBar>
+      {children}
     </div>
   );
 }
