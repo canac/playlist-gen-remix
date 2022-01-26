@@ -1,5 +1,5 @@
 import { Label } from '@prisma/client';
-import { List, ListItem, ListItemText } from '@mui/material';
+import { List, ListItem, ListItemButton, ListItemText } from '@mui/material';
 
 export type LabelListProps = {
   labels: (Label & {
@@ -12,7 +12,9 @@ export default function LabelList(props: LabelListProps): JSX.Element {
     <List>
       {props.labels.map((label) => (
         <ListItem key={label.id}>
-          <ListItemText primary={`${label.name} (${label.numTracks})`} />
+          <ListItemButton component="a" href={`/labels/${label.id}`}>
+            <ListItemText primary={`${label.name} (${label.numTracks})`} />
+          </ListItemButton>
         </ListItem>
       ))}
     </List>
