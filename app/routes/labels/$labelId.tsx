@@ -1,5 +1,6 @@
 import { PrismaClient, Label } from '@prisma/client';
 import { useLoaderData, json, LoaderFunction, MetaFunction } from 'remix';
+import LabelDetail from '~/components/LabelDetail';
 import { extractIntFromParam } from '~/lib/helpers';
 import { ensureAuthenticated } from '~/middleware';
 
@@ -46,9 +47,5 @@ export const meta: MetaFunction = ({ data }: { data: LabelData }) => {
 export default function LabelRoute() {
   const data = useLoaderData<LabelData>();
 
-  return (
-    <p>
-      {data.label.name} ({data.label.numTracks})
-    </p>
-  );
+  return <LabelDetail label={data.label} />;
 }

@@ -7,6 +7,7 @@ import {
   Link,
   LoaderFunction,
   MetaFunction,
+  Outlet,
 } from 'remix';
 import React from 'react';
 import LabelList from '~/components/LabelList';
@@ -84,7 +85,14 @@ export default function Index() {
 
   return (
     <>
-      <LabelList labels={data.labels}></LabelList>
+      <Box sx={{ display: 'flex', flexDirection: 'row' }}>
+        <Box sx={{ flex: 1 }}>
+          <LabelList labels={data.labels} />
+        </Box>
+        <Box sx={{ flex: 3 }}>
+          <Outlet />
+        </Box>
+      </Box>
       <Box
         sx={{ marginBottom: '1em', display: 'flex', justifyContent: 'center' }}
       >
