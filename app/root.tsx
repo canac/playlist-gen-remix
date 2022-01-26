@@ -15,12 +15,7 @@ import {
   Tooltip,
   Typography,
 } from '@mui/material';
-import {
-  useLoaderData,
-  json,
-  Form,
-  LoaderFunction,
-} from 'remix';
+import { useLoaderData, json, Form, LoaderFunction, MetaFunction } from 'remix';
 import React, { useState } from 'react';
 import { ensureUser } from '~/middleware';
 import {
@@ -48,6 +43,12 @@ export const links: LinksFunction = () => {
       href: 'https://fonts.googleapis.com/css?family=Roboto:300,400,500,700&display=swap',
     },
   ];
+};
+
+export const meta: MetaFunction = () => {
+  return {
+    description: 'Generate Spotify playlists from labeled tracks',
+  };
 };
 
 export default function App() {

@@ -40,7 +40,6 @@ export const loader: LoaderFunction = async ({ request, params }) => {
 export const meta: MetaFunction = ({ data }: { data: LabelData }) => {
   return {
     title: `Playlist Gen | Label "${data.label.name}"`,
-    description: 'Generate Spotify playlists from labeled tracks',
   };
 };
 
