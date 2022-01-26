@@ -45,3 +45,8 @@ export function extractIntFromFormData(
 ): number {
   return validateInt(form.get(paramName), paramName);
 }
+
+// Extract the param with the specified name from the environment variables, expecting it to be a string
+export function extractStringFromEnvVar(varName: string): string {
+  return validateString(process.env[varName], varName);
+}

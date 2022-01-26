@@ -4,6 +4,7 @@ import invariant from 'tiny-invariant';
 import { PrismaClient } from '@prisma/client';
 import { commitSession, getSession } from '~/sessions.server';
 import { z } from 'zod';
+import { extractStringFromEnvVar } from '~/lib/helpers';
 
 // POST https://accounts.spotify.com/api/token
 // Only includes fields that we care about
@@ -25,19 +26,6 @@ const ProfileResponse = z.object({
 });
 
 export const loader: LoaderFunction = async ({ request }) => {
-  invariant(
-    typeof process.env.DOMAIN === 'string',
-    'DOMAIN environment variable is required',
-  );
-  invariant(
-    typeof process.env.SPOTIFY_CLIENT_ID === 'string',
-    'SPOTIFY_CLIENT_ID environment variable is required',
-  );
-  invariant(
-    typeof process.env.SPOTIFY_CLIENT_SECRET === 'string',
-    'SPOTIFY_CLIENT_SECRET environment variable is required',
-  );
-
   const code = new URL(request.url).searchParams.get('code');
   invariant(typeof code === 'string', 'Expected code to be a string');
 
@@ -45,8 +33,13 @@ export const loader: LoaderFunction = async ({ request }) => {
   const body = new URLSearchParams();
   body.append('grant_type', 'authorization_code');
   body.append('code', code);
-  body.append('redirect_uri', `${process.env.DOMAIN}/auth/oauth_callback`);
-  const authorization = `${process.env.SPOTIFY_CLIENT_ID}:${process.env.SPOTIFY_CLIENT_SECRET}`;
+  body.append(
+    'redirect_uri',
+    `${extractStringFromEnvVar('DOMAIN')}/auth/oauth_callback`,
+  );
+  const authorization = `${extractStringFromEnvVar(
+    'SPOTIFY_CLIENT_ID',
+  )}:${extractStringFromEnvVar('SPOTIFY_CLIENT_SECRET')}`;
   const tokenRes = await fetch('https://accounts.spotify.com/api/token', {
     method: 'POST',
     body,

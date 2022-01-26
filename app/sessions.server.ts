@@ -1,17 +1,12 @@
 import { createCookieSessionStorage } from 'remix';
-import invariant from 'tiny-invariant';
-
-invariant(
-  typeof process.env.COOKIE_SECRET === 'string',
-  'COOKIE_SECRET environment variable is required',
-);
+import { extractStringFromEnvVar } from '~/lib/helpers';
 
 const { getSession, commitSession, destroySession } =
   createCookieSessionStorage({
     cookie: {
       name: '__session',
       path: '/',
-      secrets: [process.env.COOKIE_SECRET],
+      secrets: [extractStringFromEnvVar('COOKIE_SECRET')],
       sameSite: true,
     },
   });
