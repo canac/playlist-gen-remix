@@ -31,12 +31,12 @@ export const loader: LoaderFunction = async ({ request }) => {
 
   const pageSize = 20;
 
+  // Default to the first page
   let page = 0;
   try {
-    page = extractIntFromSearchParams(
-      new URL(request.url).searchParams,
-      'page',
-    );
+    // Subtract one because the query string page is 1-indexed, but we need a 0-indexed page
+    page =
+      extractIntFromSearchParams(new URL(request.url).searchParams, 'page') - 1;
   } catch (err) {
     // Silently ignore invalid pages because we want don't want an error just because of a bad query string
   }
