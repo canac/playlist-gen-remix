@@ -12,6 +12,7 @@ import {
 import React from 'react';
 import LabelList from '~/components/LabelList';
 import { ensureAuthenticated } from '~/middleware';
+import { extractIntFromSearchParams } from '~/lib/helpers';
 
 type LabelsData = {
   tracks: (Track & {
@@ -30,11 +31,15 @@ export const loader: LoaderFunction = async ({ request }) => {
 
   const pageSize = 20;
 
-  const url = new URL(request.url);
-  // Silently ignore invalid pages because we want don't want an error just because of a bad query string
-  const qsPage = parseInt(url.searchParams.get('page') ?? '', 10);
-  // Pages in the query string are 1-index, but we need a 0-indexed
-  const page = Number.isNaN(qsPage) ? 0 : qsPage - 1;
+  let page = 0;
+  try {
+    page = extractIntFromSearchParams(
+      new URL(request.url).searchParams,
+      'page',
+    );
+  } catch (err) {
+    // Silently ignore invalid pages because we want don't want an error just because of a bad query string
+  }
 
   // Get the user's labels from the database
   const prisma = new PrismaClient();

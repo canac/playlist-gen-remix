@@ -11,6 +11,7 @@ import {
 import React from 'react';
 import TrackList from '~/components/TrackList';
 import { ensureAuthenticated } from '~/middleware';
+import { extractIntFromSearchParams } from '~/lib/helpers';
 
 type IndexData = {
   tracks: (Track & {
@@ -27,11 +28,15 @@ export const loader: LoaderFunction = async ({ request }) => {
 
   const trackPageSize = 20;
 
-  const url = new URL(request.url);
-  // Silently ignore invalid pages because we want don't want an error just because of a bad query string
-  const qsPage = parseInt(url.searchParams.get('page') ?? '', 10);
-  // Pages in the query string are 1-index, but we need a 0-indexed
-  const trackPage = Number.isNaN(qsPage) ? 0 : qsPage - 1;
+  let trackPage = 0;
+  try {
+    trackPage = extractIntFromSearchParams(
+      new URL(request.url).searchParams,
+      'page',
+    );
+  } catch (err) {
+    // Silently ignore invalid pages because we want don't want an error just because of a bad query string
+  }
 
   // Get the user and their tracks and labels from the database
   const prisma = new PrismaClient();

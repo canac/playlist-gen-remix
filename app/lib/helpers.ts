@@ -46,6 +46,22 @@ export function extractIntFromFormData(
   return validateInt(form.get(paramName), paramName);
 }
 
+// Extract the param with the specified name from the provided form data, expecting it to be a string
+export function extractStringFromSearchParams(
+  searchParams: URLSearchParams,
+  paramName: string,
+): string {
+  return validateString(searchParams.get(paramName), paramName);
+}
+
+// Extract the param with the specified name from the provided form data, expecting it to be an integer
+export function extractIntFromSearchParams(
+  searchParams: URLSearchParams,
+  paramName: string,
+): number {
+  return validateInt(searchParams.get(paramName), paramName);
+}
+
 // Extract the param with the specified name from the environment variables, expecting it to be a string
 export function extractStringFromEnvVar(varName: string): string {
   return validateString(process.env[varName], varName);

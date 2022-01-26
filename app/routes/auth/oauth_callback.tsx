@@ -1,10 +1,12 @@
 import { useEffect } from 'react';
 import { LoaderFunction } from 'remix';
-import invariant from 'tiny-invariant';
 import { PrismaClient } from '@prisma/client';
 import { commitSession, getSession } from '~/sessions.server';
 import { z } from 'zod';
-import { extractStringFromEnvVar } from '~/lib/helpers';
+import {
+  extractStringFromEnvVar,
+  extractStringFromSearchParams,
+} from '~/lib/helpers';
 
 // POST https://accounts.spotify.com/api/token
 // Only includes fields that we care about
@@ -26,8 +28,10 @@ const ProfileResponse = z.object({
 });
 
 export const loader: LoaderFunction = async ({ request }) => {
-  const code = new URL(request.url).searchParams.get('code');
-  invariant(typeof code === 'string', 'Expected code to be a string');
+  const code = extractStringFromSearchParams(
+    new URL(request.url).searchParams,
+    'code',
+  );
 
   // Exchange the code for an access token
   const body = new URLSearchParams();
