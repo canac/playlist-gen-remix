@@ -1,7 +1,7 @@
 import { PrismaClient } from '@prisma/client';
 import { ActionFunction, json } from 'remix';
 import { extractIntFromFormData } from '~/lib/helpers';
-import { ensureAuthenticated } from '~/middleware';
+import { ensureAuthenticated } from '~/lib/middleware';
 
 /*
  * Remove all labels from a track.

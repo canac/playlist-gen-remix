@@ -1,5 +1,5 @@
 import { redirect, ActionFunction } from 'remix';
-import { getSession, destroySession } from '~/sessions.server';
+import { getSession, destroySession } from '~/lib/sessions.server';
 
 // Log the user out and redirect them to the login page
 export const action: ActionFunction = async ({ request }) => {

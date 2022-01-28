@@ -4,7 +4,7 @@ import {
   extractIntFromFormData,
   extractStringFromFormData,
 } from '~/lib/helpers';
-import { ensureAuthenticated } from '~/middleware';
+import { ensureAuthenticated } from '~/lib/middleware';
 
 /*
  * Create a new label that is immediately added to an existing track.

@@ -1,5 +1,5 @@
 import { useLoaderData, json, redirect, LoaderFunction } from 'remix';
-import { getUser } from '~/middleware';
+import { getUser } from '~/lib/middleware';
 
 type LoginData = {
   spotifyOauthUrl: string;

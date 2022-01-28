@@ -1,7 +1,7 @@
 import { useEffect } from 'react';
 import { LoaderFunction } from 'remix';
 import { PrismaClient } from '@prisma/client';
-import { commitSession, getSession } from '~/sessions.server';
+import { commitSession, getSession } from '~/lib/sessions.server';
 import { z } from 'zod';
 import {
   extractStringFromEnvVar,

@@ -17,7 +17,7 @@ import {
 } from '@mui/material';
 import { useLoaderData, json, Form, LoaderFunction, MetaFunction } from 'remix';
 import React, { useState } from 'react';
-import { ensureUser } from '~/middleware';
+import { ensureUser } from '~/lib/middleware';
 import {
   Links,
   LinksFunction,

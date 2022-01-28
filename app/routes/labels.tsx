@@ -11,7 +11,7 @@ import {
 } from 'remix';
 import React from 'react';
 import LabelList from '~/components/LabelList';
-import { ensureAuthenticated } from '~/middleware';
+import { ensureAuthenticated } from '~/lib/middleware';
 import { extractIntFromSearchParams } from '~/lib/helpers';
 
 type LabelsData = {

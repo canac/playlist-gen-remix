@@ -1,5 +1,5 @@
 import { ActionFunction, redirect } from 'remix';
-import { ensureUser } from '~/middleware';
+import { ensureUser } from '~/lib/middleware';
 import { syncPlaylists } from '~/spotifyApi';
 
 /*
