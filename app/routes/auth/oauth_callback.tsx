@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import { LoaderFunction } from 'remix';
+import { Link, LoaderFunction } from 'remix';
 import { PrismaClient } from '@prisma/client';
 import { commitSession, getSession } from '~/lib/sessions.server';
 import { z } from 'zod';
@@ -106,7 +106,7 @@ export default function Login() {
     <div className="page">
       <p>Logging you in...</p>
       <p>
-        Click <a href="/">here</a> to return to the site if you are not
+        Click <Link to="/">here</Link> to return to the site if you are not
         redirected automatically.
       </p>
     </div>

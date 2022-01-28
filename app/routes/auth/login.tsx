@@ -1,4 +1,4 @@
-import { useLoaderData, json, redirect, LoaderFunction } from 'remix';
+import { useLoaderData, json, redirect, LoaderFunction, Link } from 'remix';
 import { getUser } from '~/lib/middleware';
 
 type LoginData = {
@@ -23,7 +23,7 @@ export default function Login() {
 
   return (
     <div style={{ textAlign: 'center' }}>
-      <a href={data.spotifyOauthUrl}>Login with Spotify</a>
+      <Link to={data.spotifyOauthUrl}>Login with Spotify</Link>
     </div>
   );
 }
