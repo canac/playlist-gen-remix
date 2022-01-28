@@ -1,4 +1,4 @@
-import { Params } from 'react-router-dom';
+import { Params } from 'react-router';
 import invariant from 'tiny-invariant';
 
 // Extract a string value from an unknown input
