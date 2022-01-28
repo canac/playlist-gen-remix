@@ -12,6 +12,7 @@ import React from 'react';
 import TrackList from '~/components/TrackList';
 import { ensureAuthenticated } from '~/lib/middleware';
 import { extractIntFromSearchParams } from '~/lib/helpers';
+import { attemptOr } from '~/lib/util';
 
 type IndexData = {
   tracks: (Track & {
@@ -28,15 +29,14 @@ export const loader: LoaderFunction = async ({ request }) => {
 
   const trackPageSize = 20;
 
-  // Default to the first page
-  let trackPage = 0;
-  try {
+  // Silently ignore invalid pages because we want don't want an error just because of a bad query string
+  const trackPage = attemptOr(
     // Subtract one because the query string page is 1-indexed, but we need a 0-indexed page
-    trackPage =
-      extractIntFromSearchParams(new URL(request.url).searchParams, 'page') - 1;
-  } catch (err) {
-    // Silently ignore invalid pages because we want don't want an error just because of a bad query string
-  }
+    () =>
+      extractIntFromSearchParams(new URL(request.url).searchParams, 'page') - 1,
+    // Default to the first page
+    0,
+  );
 
   // Get the user and their tracks and labels from the database
   const prisma = new PrismaClient();
