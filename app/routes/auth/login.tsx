@@ -11,11 +11,9 @@ export const loader: LoaderFunction = async ({ request }) => {
     return redirect('/');
   }
 
-  const data: LoginData = {
+  return json<LoginData>({
     spotifyOauthUrl: `https://accounts.spotify.com/authorize?response_type=code&client_id=${process.env.SPOTIFY_CLIENT_ID}&scope=user-library-read,playlist-read-private,playlist-modify-private&redirect_uri=${process.env.DOMAIN}/auth/oauth_callback`,
-  };
-
-  return json(data);
+  });
 };
 
 export default function Login() {

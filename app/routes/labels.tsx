@@ -17,9 +17,6 @@ import { attemptOr } from '~/lib/util';
 import { prisma } from '~/prisma.server';
 
 type LabelsData = {
-  tracks: (Track & {
-    labels: Label[];
-  })[];
   labels: (Label & {
     numTracks: number;
   })[];
@@ -66,7 +63,7 @@ export const loader: LoaderFunction = async ({ request }) => {
 
   const numPages = Math.ceil(user._count.labels / pageSize);
 
-  return json({
+  return json<LabelsData>({
     labels: user.labels.map(({ _count, ...label }) => ({
       ...label,
       numTracks: _count.tracks,

@@ -63,7 +63,7 @@ export const loader: LoaderFunction = async ({ request }) => {
 
   const numTrackPages = Math.ceil(user._count.tracks / trackPageSize);
 
-  return json({
+  return json<IndexData>({
     tracks: user.tracks,
     labels: user.labels,
     pageCount: Math.max(numTrackPages, 1),

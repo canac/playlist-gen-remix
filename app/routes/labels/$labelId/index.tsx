@@ -31,10 +31,9 @@ export const loader: LoaderFunction = async ({ request, params }) => {
     throw new Response('Label could not be found', { status: 404 });
   }
 
-  const data: LabelData = {
+  return json<LabelData>({
     label: { ...label, numTracks: label._count.tracks },
-  };
-  return json(data);
+  });
 };
 
 export const meta: MetaFunction = ({ data }: { data: LabelData }) => {

@@ -145,7 +145,7 @@ export const loader: LoaderFunction = async ({ request }) => {
   // Get the user from the session
   const user = await ensureUser(request);
 
-  return json({
+  return json<RootData>({
     avatarUrl: user.avatarUrl,
   });
 };
