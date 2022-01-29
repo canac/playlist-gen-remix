@@ -1,5 +1,5 @@
 import { Box, Pagination, PaginationItem } from '@mui/material';
-import { PrismaClient, Label, Track } from '@prisma/client';
+import { Label, Track } from '@prisma/client';
 import {
   useLoaderData,
   json,
@@ -14,6 +14,7 @@ import LabelList from '~/components/LabelList';
 import { ensureAuthenticated } from '~/lib/middleware';
 import { extractIntFromSearchParams } from '~/lib/helpers';
 import { attemptOr } from '~/lib/util';
+import { prisma } from '~/prisma.server';
 
 type LabelsData = {
   tracks: (Track & {
@@ -42,7 +43,6 @@ export const loader: LoaderFunction = async ({ request }) => {
   );
 
   // Get the user's labels from the database
-  const prisma = new PrismaClient();
   const user = await prisma.user.findUnique({
     where: { id: userId },
     include: {

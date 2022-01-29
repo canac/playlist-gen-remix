@@ -1,10 +1,11 @@
 // Expose higher-level methods for interacting with the Spotify API
 
-import { Label, PrismaClient, User } from '@prisma/client';
+import { User } from '@prisma/client';
 import { chunk, differenceBy, map } from 'lodash';
 import { z } from 'zod';
 import { Parser, Grammar } from 'nearley';
 import grammar from './labelGrammar';
+import { prisma } from '~/prisma.server';
 
 // Initialize the parser for the smart label criteria
 const parser = new Parser(Grammar.fromCompiled(grammar));
@@ -66,7 +67,6 @@ async function refreshAccessToken(user: User): Promise<void> {
     TokenResponse.parse(await tokenRes.json());
 
   // Save the new access token
-  const prisma = new PrismaClient();
   const modifiedFields = {
     accessToken,
     // expiresIn is the length of the token's validity in seconds
@@ -135,7 +135,6 @@ export async function syncFavoriteTracks(user: User): Promise<void> {
     }));
 
     // See if any of those tracks are already in the database
-    const prisma = new PrismaClient();
     const existingTracks = await prisma.track.findMany({
       select: { spotifyId: true },
       where: {
@@ -170,8 +169,6 @@ const CreatePlaylistResponse = z.object({
 
 // Push the tracks from the database into Spotify playlists
 export async function syncPlaylists(user: User): Promise<void> {
-  const prisma = new PrismaClient();
-
   // Find all labels that don't have a playlist yet
   const newLabels = await prisma.label.findMany({
     where: { userId: user.id, playlist: null },

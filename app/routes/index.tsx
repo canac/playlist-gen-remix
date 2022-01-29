@@ -1,5 +1,5 @@
 import { Box, Pagination, PaginationItem } from '@mui/material';
-import { PrismaClient, Label, Track } from '@prisma/client';
+import { Label, Track } from '@prisma/client';
 import {
   useLoaderData,
   json,
@@ -13,6 +13,7 @@ import TrackList from '~/components/TrackList';
 import { ensureAuthenticated } from '~/lib/middleware';
 import { extractIntFromSearchParams } from '~/lib/helpers';
 import { attemptOr } from '~/lib/util';
+import { prisma } from '~/prisma.server';
 
 type IndexData = {
   tracks: (Track & {
@@ -39,7 +40,6 @@ export const loader: LoaderFunction = async ({ request }) => {
   );
 
   // Get the user and their tracks and labels from the database
-  const prisma = new PrismaClient();
   const user = await prisma.user.findUnique({
     where: { id: userId },
     include: {

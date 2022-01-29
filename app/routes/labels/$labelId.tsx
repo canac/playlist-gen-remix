@@ -1,8 +1,9 @@
-import { PrismaClient, Label } from '@prisma/client';
+import { Label } from '@prisma/client';
 import { useLoaderData, json, LoaderFunction, MetaFunction } from 'remix';
 import LabelDetail from '~/components/LabelEditor';
 import { extractIntFromParam } from '~/lib/helpers';
 import { ensureAuthenticated } from '~/lib/middleware';
+import { prisma } from '~/prisma.server';
 
 type LabelData = {
   label: Label & {
@@ -15,7 +16,6 @@ export const loader: LoaderFunction = async ({ request, params }) => {
   const userId = await ensureAuthenticated(request);
 
   // Get the label from the database
-  const prisma = new PrismaClient();
   const label = await prisma.label.findFirst({
     where: {
       id: extractIntFromParam(params, 'labelId'),

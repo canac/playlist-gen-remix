@@ -1,7 +1,7 @@
-import { PrismaClient } from '@prisma/client';
 import { ActionFunction, json } from 'remix';
 import { extractIntFromFormData } from '~/lib/helpers';
 import { ensureAuthenticated } from '~/lib/middleware';
+import { prisma } from '~/prisma.server';
 
 /*
  * Remove all labels from a track.
@@ -16,7 +16,6 @@ export const action: ActionFunction = async ({ request }) => {
   const formData = await request.formData();
   const trackId = extractIntFromFormData(formData, 'trackId');
 
-  const prisma = new PrismaClient();
   const track = await prisma.track.findUnique({
     where: { id: trackId },
     include: {

@@ -1,10 +1,10 @@
-import { PrismaClient } from '@prisma/client';
 import { ActionFunction, json } from 'remix';
 import {
   extractIntFromFormData,
   extractStringFromFormData,
 } from '~/lib/helpers';
 import { ensureAuthenticated } from '~/lib/middleware';
+import { prisma } from '~/prisma.server';
 
 /*
  * Create a new label that is immediately added to an existing track.
@@ -21,7 +21,6 @@ export const action: ActionFunction = async ({ request }) => {
   const labelName = extractStringFromFormData(formData, 'labelName');
   const trackId = extractIntFromFormData(formData, 'trackId');
 
-  const prisma = new PrismaClient();
   const track = await prisma.track.findUnique({
     where: { id: trackId },
     select: { userId: true },

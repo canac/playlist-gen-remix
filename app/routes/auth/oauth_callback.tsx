@@ -1,12 +1,12 @@
 import { useEffect } from 'react';
 import { Link, LoaderFunction } from 'remix';
-import { PrismaClient } from '@prisma/client';
 import { commitSession, getSession } from '~/lib/sessions.server';
 import { z } from 'zod';
 import {
   extractStringFromEnvVar,
   extractStringFromSearchParams,
 } from '~/lib/helpers';
+import { prisma } from '~/prisma.server';
 
 // POST https://accounts.spotify.com/api/token
 // Only includes fields that we care about
@@ -69,7 +69,6 @@ export const loader: LoaderFunction = async ({ request }) => {
   const spotifyId = profile.id;
 
   // Save the user, avatar URL, and access token to the database
-  const prisma = new PrismaClient();
   const updatedFields = {
     avatarUrl: profile.images[0]?.url ?? null,
     accessToken,

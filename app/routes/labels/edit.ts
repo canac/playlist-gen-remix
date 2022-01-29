@@ -1,4 +1,3 @@
-import { PrismaClient } from '@prisma/client';
 import { ActionFunction, redirect } from 'remix';
 import {
   extractIntFromFormData,
@@ -6,6 +5,7 @@ import {
 } from '~/lib/helpers';
 import { ensureAuthenticated } from '~/lib/middleware';
 import { attemptOr } from '~/lib/util';
+import { prisma } from '~/prisma.server';
 
 /*
  * Edit a label.
@@ -28,7 +28,6 @@ export const action: ActionFunction = async ({ request }) => {
   );
 
   // Update the label
-  const prisma = new PrismaClient();
   const { count } = await prisma.label.updateMany({
     where: { id: labelId, userId },
     data: {

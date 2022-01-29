@@ -1,6 +1,7 @@
-import { PrismaClient, User } from '@prisma/client';
+import { User } from '@prisma/client';
 import { redirect } from 'remix';
 import { getSession } from '~/lib/sessions.server';
+import { prisma } from '~/prisma.server';
 
 // Extract the user id from the session, returning null if the user isn't logged in
 // Note that this is the User.id field in the database, not the Spotify user id
@@ -29,7 +30,6 @@ export async function getUser(request: Request): Promise<User | null> {
     return null;
   }
 
-  const prisma = new PrismaClient();
   return prisma.user.findUnique({
     where: { id: userId },
   });
