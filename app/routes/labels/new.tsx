@@ -14,8 +14,10 @@ import {
   ActionFunction,
   redirect,
 } from 'remix';
+import SmartCriteriaInput from '~/components/SmartCriteriaInput';
 import { extractStringFromFormData } from '~/lib/helpers';
 import { ensureAuthenticated } from '~/lib/middleware';
+import { validateSmartCriteria } from '~/lib/smartLabel';
 import attemptOr from '~/lib/util';
 import { prisma } from '~/prisma.server';
 
@@ -42,6 +44,13 @@ export const action: ActionFunction = async ({ request }) => {
     () => extractStringFromFormData(formData, 'smartCriteria'),
     null,
   );
+
+  if (
+    smartCriteria !== null &&
+    !(await validateSmartCriteria(userId, smartCriteria))
+  ) {
+    return new Response('Invalid smart criteria', { status: 500 });
+  }
 
   // Create the label
   const label = await prisma.label.create({
@@ -91,7 +100,7 @@ export default function NewLabelRoute() {
         label="Smart label"
       />
       {smartLabel && (
-        <TextField
+        <SmartCriteriaInput
           required
           name="smartCriteria"
           label="Smart criteria"

@@ -1,0 +1,25 @@
+import { ActionFunction, json } from 'remix';
+import { extractStringFromFormData } from '~/lib/helpers';
+import { ensureAuthenticated } from '~/lib/middleware';
+import { getCriteriaMatches } from '~/lib/smartLabel';
+
+/*
+ * Get information about the tracks that match a smart label.
+ *
+ * Parameters:
+ *   smartCriteria: string  The smart label criteria
+ */
+export const action: ActionFunction = async ({ request }) => {
+  const userId = await ensureAuthenticated(request);
+
+  // Extract the labelId and trackId from the form
+  const formData = await request.formData();
+  const smartCriteria = extractStringFromFormData(formData, 'smartCriteria');
+
+  try {
+    const matches = await getCriteriaMatches(userId, smartCriteria);
+    return json({ success: true, matchCount: matches.length });
+  } catch (err) {
+    return json({ success: false, err }, { status: 500 });
+  }
+};

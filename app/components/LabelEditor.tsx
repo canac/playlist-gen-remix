@@ -9,6 +9,7 @@ import {
 } from '@mui/material';
 import { Form } from 'remix';
 import { useState } from 'react';
+import SmartCriteriaInput from './SmartCriteriaInput';
 
 export type LabelEditorProps = {
   label: Label & {
@@ -53,7 +54,7 @@ export default function LabelEditor(props: LabelEditorProps): JSX.Element {
           defaultValue={label.name}
         />
         {label.smartCriteria === null ? null : (
-          <TextField
+          <SmartCriteriaInput
             required
             name="smartCriteria"
             label="Smart criteria"

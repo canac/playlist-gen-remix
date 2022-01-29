@@ -1,10 +1,7 @@
 import { ActionFunction, redirect } from 'remix';
-import {
-  extractIntFromFormData,
-  extractIntFromParam,
-  extractStringFromFormData,
-} from '~/lib/helpers';
+import { extractIntFromParam, extractStringFromFormData } from '~/lib/helpers';
 import { ensureAuthenticated } from '~/lib/middleware';
+import { validateSmartCriteria } from '~/lib/smartLabel';
 import { attemptOr } from '~/lib/util';
 import { prisma } from '~/prisma.server';
 
@@ -31,6 +28,13 @@ export const action: ActionFunction = async ({ request, params }) => {
     () => extractStringFromFormData(formData, 'smartCriteria'),
     null,
   );
+
+  if (
+    smartCriteria !== null &&
+    !(await validateSmartCriteria(userId, smartCriteria))
+  ) {
+    return new Response('Invalid smart criteria', { status: 500 });
+  }
 
   // Update the label
   const { count } = await prisma.label.updateMany({

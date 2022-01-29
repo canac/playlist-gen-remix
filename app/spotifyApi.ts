@@ -3,12 +3,8 @@
 import { User } from '@prisma/client';
 import { chunk, differenceBy, map } from 'lodash';
 import { z } from 'zod';
-import { Parser, Grammar } from 'nearley';
-import grammar from './labelGrammar';
 import { prisma } from '~/prisma.server';
-
-// Initialize the parser for the smart label criteria
-const parser = new Parser(Grammar.fromCompiled(grammar));
+import { getCriteriaMatches } from '~/lib/smartLabel';
 
 // Make a request to the Spotify API
 // This function takes care of adding the Spotify access token to the request
@@ -202,23 +198,6 @@ export async function syncPlaylists(user: User): Promise<void> {
     });
   }
 
-  const allTracks = await prisma.track.findMany({
-    where: { userId: user.id },
-    select: { id: true, dateAdded: true, spotifyId: true, explicit: true },
-  });
-  const allLabels = await prisma.label.findMany({
-    // Filter out smart labels
-    where: { userId: user.id, smartCriteria: null },
-    include: {
-      tracks: { select: { id: true } },
-    },
-  });
-  // Index the labels and their tracks by id
-  // The key is the label id, and the value is a set of the label's track ids
-  const indexedLabels = new Map<number, Set<number>>(
-    allLabels.map((label) => [label.id, new Set(map(label.tracks, 'id'))]),
-  );
-
   const dbPlaylists = await prisma.playlist.findMany({
     where: { userId: user.id },
     include: {
@@ -236,47 +215,11 @@ export async function syncPlaylists(user: User): Promise<void> {
 
     // Override the tracks for smart labels
     const { smartCriteria } = playlist.label;
-    if (smartCriteria) {
+    if (smartCriteria !== null) {
       try {
-        // Parsing the smart criteria produces an evaluator function that when provided
-        // a way to look up the values for value identifiers determines whether a track
-        // matches the criteria
-        const state = parser.save();
-        parser.feed(smartCriteria);
-        const evaluator = parser.results[0];
-        // Save and restore the parser state so that we can reuse the parser instance
-        parser.restore(state);
-        tracks = allTracks.filter((track) =>
-          // Pass the evaluator a method that looks up the values of each value identifier passed in
-          evaluator((value: string): boolean => {
-            if (value === 'explicit') {
-              return track.explicit;
-            }
-            if (value === 'clean') {
-              return !track.explicit;
-            }
-
-            const yearMatches = /^year:(?<year>\d+)$/.exec(value);
-            if (yearMatches?.groups) {
-              const year = parseInt(yearMatches.groups.year, 10);
-              return track.dateAdded.getFullYear() === year;
-            }
-
-            const labelMatches = /^label:(?<labelId>\d+)$/.exec(value);
-            if (labelMatches?.groups) {
-              const labelId = parseInt(labelMatches.groups.labelId, 10);
-              const labelTracks = indexedLabels.get(labelId);
-              if (!labelTracks) {
-                throw new Error(`Referenced non-existent label "${labelId}"`);
-              }
-
-              return labelTracks.has(track.id);
-            }
-
-            throw new Error(`Invalid value "${value}"`);
-          }),
-        );
+        tracks = await getCriteriaMatches(user.id, smartCriteria);
       } catch (err) {
+        tracks = [];
         console.error(err);
       }
     }
