@@ -1,6 +1,7 @@
 import { ActionFunction, redirect } from 'remix';
 import {
   extractIntFromFormData,
+  extractIntFromParam,
   extractStringFromFormData,
 } from '~/lib/helpers';
 import { ensureAuthenticated } from '~/lib/middleware';
@@ -10,17 +11,21 @@ import { prisma } from '~/prisma.server';
 /*
  * Edit a label.
  *
- * Parameters:
- *   labelId: number        The id of the label to edit
+ * URL parameters:
+ *   labelId: number        The id of the label to delete
+ *
+ * Form parameters:
  *   name: string           The new name of the label
  *   smartCriteria: string? The new smart criteria for the label
  */
-export const action: ActionFunction = async ({ request }) => {
+export const action: ActionFunction = async ({ request, params }) => {
   const userId = await ensureAuthenticated(request);
 
-  // Extract the labelId and trackId from the form
+  // Extract the labelId from the URL
+  const labelId = extractIntFromParam(params, 'labelId');
+
+  // Extract the other fields from the form
   const formData = await request.formData();
-  const labelId = extractIntFromFormData(formData, 'labelId');
   const name = extractStringFromFormData(formData, 'name');
   const smartCriteria = attemptOr(
     () => extractStringFromFormData(formData, 'smartCriteria'),
