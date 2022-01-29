@@ -1,6 +1,6 @@
 import { PrismaClient, Label } from '@prisma/client';
 import { useLoaderData, json, LoaderFunction, MetaFunction } from 'remix';
-import LabelDetail from '~/components/LabelDetail';
+import LabelDetail from '~/components/LabelEditor';
 import { extractIntFromParam } from '~/lib/helpers';
 import { ensureAuthenticated } from '~/lib/middleware';
 
