@@ -4,6 +4,9 @@ import invariant from 'tiny-invariant';
 // Extract a string value from an unknown input
 function validateString(input: unknown, name: string): string {
   invariant(typeof input === 'string', `"${name}" must be a string`);
+  if (input.length === 0) {
+    throw new Error(`"${name} must not be empty`);
+  }
   return input;
 }
 
