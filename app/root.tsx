@@ -142,6 +142,13 @@ function Document({
 }
 
 export const loader: LoaderFunction = async ({ request }) => {
+  // Don't require auth routes to be authenticated
+  if (new URL(request.url).pathname.startsWith('/auth')) {
+    return json<RootData>({
+      avatarUrl: null,
+    });
+  }
+
   // Get the user from the session
   const user = await ensureUser(request);
 
