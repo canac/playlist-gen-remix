@@ -15,11 +15,11 @@ import {
   redirect,
 } from 'remix';
 import SmartCriteriaInput from '~/components/SmartCriteriaInput';
-import { extractStringFromFormData } from '~/lib/helpers';
-import { ensureAuthenticated } from '~/lib/middleware';
-import { validateSmartCriteria } from '~/lib/smartLabel';
+import { extractStringFromFormData } from '~/lib/helpers.server';
+import { ensureAuthenticated } from '~/lib/middleware.server';
+import { validateSmartCriteria } from '~/lib/smartLabel.server';
 import attemptOr from '~/lib/util';
-import { prisma } from '~/prisma.server';
+import { prisma } from '~/lib/prisma.server';
 
 export const meta: MetaFunction = () => {
   return {

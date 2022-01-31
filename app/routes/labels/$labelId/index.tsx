@@ -1,9 +1,9 @@
 import { Label } from '@prisma/client';
 import { useLoaderData, json, LoaderFunction, MetaFunction } from 'remix';
 import LabelDetail from '~/components/LabelEditor';
-import { extractIntFromParam } from '~/lib/helpers';
-import { ensureAuthenticated } from '~/lib/middleware';
-import { prisma } from '~/prisma.server';
+import { extractIntFromParam } from '~/lib/helpers.server';
+import { ensureAuthenticated } from '~/lib/middleware.server';
+import { prisma } from '~/lib/prisma.server';
 
 type LabelData = {
   label: Label & {

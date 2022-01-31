@@ -2,9 +2,9 @@ import { ActionFunction, json } from 'remix';
 import {
   extractIntFromFormData,
   extractStringFromFormData,
-} from '~/lib/helpers';
-import { ensureAuthenticated } from '~/lib/middleware';
-import { prisma } from '~/prisma.server';
+} from '~/lib/helpers.server';
+import { ensureAuthenticated } from '~/lib/middleware.server';
+import { prisma } from '~/lib/prisma.server';
 
 /*
  * Create a new label that is immediately added to an existing track.

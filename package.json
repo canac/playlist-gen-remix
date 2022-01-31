@@ -7,7 +7,7 @@
     "dev": "node -r dotenv/config node_modules/.bin/remix dev",
     "postinstall": "remix setup node",
     "start": "remix-serve build",
-    "grammar-gen": "nearleyc labelGrammar.ne > app/labelGrammar.ts"
+    "grammar-gen": "nearleyc labelGrammar.ne > app/lib/labelGrammar.server.ts"
   },
   "dependencies": {
     "@emotion/react": "^11.7.1",

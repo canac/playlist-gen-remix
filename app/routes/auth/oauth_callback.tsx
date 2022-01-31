@@ -5,8 +5,8 @@ import { z } from 'zod';
 import {
   extractStringFromEnvVar,
   extractStringFromSearchParams,
-} from '~/lib/helpers';
-import { prisma } from '~/prisma.server';
+} from '~/lib/helpers.server';
+import { prisma } from '~/lib/prisma.server';
 
 // POST https://accounts.spotify.com/api/token
 // Only includes fields that we care about

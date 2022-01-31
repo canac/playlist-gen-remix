@@ -10,10 +10,10 @@ import {
 } from 'remix';
 import React from 'react';
 import TrackList from '~/components/TrackList';
-import { ensureAuthenticated } from '~/lib/middleware';
-import { extractIntFromSearchParams } from '~/lib/helpers';
+import { ensureAuthenticated } from '~/lib/middleware.server';
+import { extractIntFromSearchParams } from '~/lib/helpers.server';
 import { attemptOr } from '~/lib/util';
-import { prisma } from '~/prisma.server';
+import { prisma } from '~/lib/prisma.server';
 
 type IndexData = {
   tracks: (Track & {

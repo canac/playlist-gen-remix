@@ -3,8 +3,8 @@
 import { User } from '@prisma/client';
 import { chunk, differenceBy, map } from 'lodash';
 import { z } from 'zod';
-import { prisma } from '~/prisma.server';
-import { getCriteriaMatches } from '~/lib/smartLabel';
+import { prisma } from '~/lib/prisma.server';
+import { getCriteriaMatches } from '~/lib/smartLabel.server';
 
 // Make a request to the Spotify API
 // This function takes care of adding the Spotify access token to the request

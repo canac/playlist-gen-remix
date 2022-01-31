@@ -1,9 +1,12 @@
 import { ActionFunction, redirect } from 'remix';
-import { extractIntFromParam, extractStringFromFormData } from '~/lib/helpers';
-import { ensureAuthenticated } from '~/lib/middleware';
-import { validateSmartCriteria } from '~/lib/smartLabel';
+import {
+  extractIntFromParam,
+  extractStringFromFormData,
+} from '~/lib/helpers.server';
+import { ensureAuthenticated } from '~/lib/middleware.server';
+import { validateSmartCriteria } from '~/lib/smartLabel.server';
 import { attemptOr } from '~/lib/util';
-import { prisma } from '~/prisma.server';
+import { prisma } from '~/lib/prisma.server';
 
 /*
  * Edit a label.

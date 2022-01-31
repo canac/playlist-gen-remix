@@ -1,6 +1,6 @@
 import { ActionFunction, redirect } from 'remix';
-import { ensureUser } from '~/lib/middleware';
-import { syncFavoriteTracks } from '~/spotifyApi';
+import { ensureUser } from '~/lib/middleware.server';
+import { syncFavoriteTracks } from '~/lib/spotifyApi.server';
 
 /*
  * Pull the user's liked tracks from Spotify into the database.

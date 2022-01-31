@@ -1,7 +1,7 @@
 import { ActionFunction, json } from 'remix';
-import { extractStringFromFormData } from '~/lib/helpers';
-import { ensureAuthenticated } from '~/lib/middleware';
-import { getCriteriaMatches } from '~/lib/smartLabel';
+import { extractStringFromFormData } from '~/lib/helpers.server';
+import { ensureAuthenticated } from '~/lib/middleware.server';
+import { getCriteriaMatches } from '~/lib/smartLabel.server';
 
 /*
  * Get information about the tracks that match a smart label.

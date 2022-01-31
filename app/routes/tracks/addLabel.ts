@@ -1,7 +1,7 @@
 import { ActionFunction, json } from 'remix';
-import { extractIntFromFormData } from '~/lib/helpers';
-import { ensureAuthenticated } from '~/lib/middleware';
-import { prisma } from '~/prisma.server';
+import { extractIntFromFormData } from '~/lib/helpers.server';
+import { ensureAuthenticated } from '~/lib/middleware.server';
+import { prisma } from '~/lib/prisma.server';
 
 /*
  * Add a label to a track.
