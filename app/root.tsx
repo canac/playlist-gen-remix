@@ -158,7 +158,8 @@ export const loader: LoaderFunction = async ({ request }) => {
 };
 
 function Layout({ children }: { children: React.ReactNode }) {
-  const data = useLoaderData<RootData>();
+  // useLoaderData can return undefined in the root route if there is an error somewhere
+  const data = useLoaderData<RootData | undefined>();
 
   const [anchorEl, setAnchorEl] = useState<HTMLElement | null>(null);
   const openMenu = (event: React.MouseEvent<HTMLElement>) => {
@@ -190,7 +191,7 @@ function Layout({ children }: { children: React.ReactNode }) {
             </Tooltip>
           </Form>
           <IconButton size="large" color="inherit" onClick={openMenu}>
-            {data.avatarUrl ? (
+            {data?.avatarUrl ? (
               <Avatar alt="User avatar" src={data.avatarUrl} />
             ) : (
               <FontAwesomeIcon icon={faUser} />
