@@ -15,6 +15,8 @@ import { ensureAuthenticated } from '~/lib/middleware.server';
 import { extractIntFromSearchParams } from '~/lib/helpers.server';
 import { attemptOr } from '~/lib/util';
 import { prisma } from '~/lib/prisma.server';
+import { getCriteriaMatches } from '~/lib/smartLabel.server';
+import CacheToken from '~/lib/cacheToken';
 
 type LabelsData = {
   labels: (Label & {
@@ -62,6 +64,22 @@ export const loader: LoaderFunction = async ({ request }) => {
   }
 
   const numPages = Math.ceil(user._count.labels / pageSize);
+
+  // Calculate the track count of smart labels
+  const cacheToken = new CacheToken();
+  for (const label of user.labels) {
+    if (label.smartCriteria !== null) {
+      const countTracksPromise = getCriteriaMatches(
+        userId,
+        label.smartCriteria,
+        cacheToken,
+      )
+        .then((matches) => matches.length)
+        // Suppress errors calculating the matches and default to 0
+        .catch(() => 0);
+      label._count.tracks = await countTracksPromise;
+    }
+  }
 
   return json<LabelsData>({
     labels: user.labels.map(({ _count, ...label }) => ({
