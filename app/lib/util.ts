@@ -11,5 +11,3 @@ export function attemptOr<Result, Default>(
     return defaultValue;
   }
 }
-
-export default attemptOr;
