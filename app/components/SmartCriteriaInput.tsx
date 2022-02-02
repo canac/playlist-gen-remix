@@ -10,7 +10,7 @@ export default function SmartCriteriaInput(props: TextFieldProps): JSX.Element {
     const form = new URLSearchParams();
     form.set('smartCriteria', smartCriteria);
     fetcher.submit(form, {
-      action: '/smartLabelMatches',
+      action: '/api/smartLabelMatches',
       method: 'post',
     });
   }
