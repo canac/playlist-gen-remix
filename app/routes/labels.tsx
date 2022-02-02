@@ -108,7 +108,7 @@ export default function Index() {
         <Box sx={{ flex: 1 }}>
           <LabelList labels={data.labels} />
         </Box>
-        <Box sx={{ flex: 3 }}>
+        <Box sx={{ flex: 3, margin: '1em' }}>
           <Outlet />
         </Box>
       </Box>

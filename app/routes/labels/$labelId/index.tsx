@@ -1,14 +1,11 @@
 import { Label } from '@prisma/client';
 import { useLoaderData, json, LoaderFunction, MetaFunction } from 'remix';
-import LabelDetail from '~/components/LabelEditor';
 import { extractIntFromParam } from '~/lib/helpers.server';
 import { ensureAuthenticated } from '~/lib/middleware.server';
 import { prisma } from '~/lib/prisma.server';
 
 type LabelData = {
-  label: Label & {
-    numTracks: number;
-  };
+  label: Pick<Label, 'id' | 'name'>;
 };
 
 export const loader: LoaderFunction = async ({ request, params }) => {
@@ -21,18 +18,14 @@ export const loader: LoaderFunction = async ({ request, params }) => {
       id: extractIntFromParam(params, 'labelId'),
       userId,
     },
-    include: {
-      _count: {
-        select: { tracks: true },
-      },
-    },
+    select: { id: true, name: true },
   });
   if (!label) {
     throw new Response('Label could not be found', { status: 404 });
   }
 
   return json<LabelData>({
-    label: { ...label, numTracks: label._count.tracks },
+    label,
   });
 };
 
@@ -45,5 +38,5 @@ export const meta: MetaFunction = ({ data }: { data: LabelData }) => {
 export default function LabelRoute() {
   const data = useLoaderData<LabelData>();
 
-  return <LabelDetail label={data.label} />;
+  return null;
 }
