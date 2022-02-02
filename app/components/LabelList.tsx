@@ -7,7 +7,11 @@ import {
   ListItemText,
 } from '@mui/material';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faTrash, faPencil } from '@fortawesome/free-solid-svg-icons';
+import {
+  faTrash,
+  faPencil,
+  faWandMagicSparkles,
+} from '@fortawesome/free-solid-svg-icons';
 import { useMatch } from 'react-router';
 import { Link, useResolvedPath } from 'remix';
 import { ReactNode } from 'react';
@@ -62,7 +66,17 @@ export default function LabelList(props: LabelListProps): JSX.Element {
     <List component="nav">
       {props.labels.map((label) => (
         <LabelLink key={label.id} labelId={label.id}>
-          <ListItemText primary={`${label.name} (${label.numTracks})`} />
+          <ListItemText
+            primary={`${label.name} (${label.numTracks})`}
+            secondary={
+              label.smartCriteria === null ? null : (
+                <>
+                  <FontAwesomeIcon icon={faWandMagicSparkles} />{' '}
+                  {label.smartCriteria}
+                </>
+              )
+            }
+          />
         </LabelLink>
       ))}
       <LabelLink labelId="new">
