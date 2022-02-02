@@ -15,7 +15,14 @@ import {
   Tooltip,
   Typography,
 } from '@mui/material';
-import { useLoaderData, json, Form, LoaderFunction, MetaFunction } from 'remix';
+import {
+  useLoaderData,
+  json,
+  Form,
+  LoaderFunction,
+  MetaFunction,
+  useFetcher,
+} from 'remix';
 import React, { useState } from 'react';
 import { ensureUser } from '~/lib/middleware.server';
 import {
@@ -161,6 +168,9 @@ function Layout({ children }: { children: React.ReactNode }) {
   // useLoaderData can return undefined in the root route if there is an error somewhere
   const data = useLoaderData<RootData | undefined>();
 
+  const pullFetcher = useFetcher();
+  const pushFetcher = useFetcher();
+
   const [anchorEl, setAnchorEl] = useState<HTMLElement | null>(null);
   const openMenu = (event: React.MouseEvent<HTMLElement>) => {
     setAnchorEl(event.currentTarget);
@@ -176,20 +186,30 @@ function Layout({ children }: { children: React.ReactNode }) {
           <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
             Playlist Generator
           </Typography>
-          <Form action="/sync/pullTracks" method="post" replace>
+          <pullFetcher.Form action="/sync/pullTracks" method="post">
             <Tooltip title="Pull tracks from Spotify">
-              <IconButton type="submit" size="large" color="inherit">
+              <IconButton
+                type="submit"
+                size="large"
+                color="inherit"
+                disabled={pullFetcher.state === 'submitting'}
+              >
                 <FontAwesomeIcon icon={faCloudArrowDown} />
               </IconButton>
             </Tooltip>
-          </Form>
-          <Form action="/sync/pushTracks" method="post" replace>
+          </pullFetcher.Form>
+          <pushFetcher.Form action="/sync/pushTracks" method="post">
             <Tooltip title="Push playlists to Spotify">
-              <IconButton type="submit" size="large" color="inherit">
+              <IconButton
+                type="submit"
+                size="large"
+                color="inherit"
+                disabled={pushFetcher.state === 'submitting'}
+              >
                 <FontAwesomeIcon icon={faCloudArrowUp} />
               </IconButton>
             </Tooltip>
-          </Form>
+          </pushFetcher.Form>
           <IconButton size="large" color="inherit" onClick={openMenu}>
             {data?.avatarUrl ? (
               <Avatar alt="User avatar" src={data.avatarUrl} />

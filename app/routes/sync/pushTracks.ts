@@ -1,4 +1,4 @@
-import { ActionFunction, redirect } from 'remix';
+import { ActionFunction, json } from 'remix';
 import { ensureUser } from '~/lib/middleware.server';
 import { syncPlaylists } from '~/lib/spotifyApi.server';
 
@@ -8,5 +8,5 @@ import { syncPlaylists } from '~/lib/spotifyApi.server';
 export const action: ActionFunction = async ({ request }) => {
   const user = await ensureUser(request);
   await syncPlaylists(user);
-  return redirect('/');
+  return json({ success: true });
 };
