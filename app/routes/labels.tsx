@@ -112,24 +112,30 @@ export default function Index() {
           <Outlet />
         </Box>
       </Box>
-      <Box
-        sx={{ marginBottom: '1em', display: 'flex', justifyContent: 'center' }}
-      >
-        <Pagination
-          count={data.pageCount}
-          defaultPage={page}
-          shape="rounded"
-          color="primary"
-          size="large"
-          renderItem={(item) => (
-            <PaginationItem
-              component={Link}
-              to={item.page === 1 ? '/labels' : `/labels?page=${item.page}`}
-              {...item}
-            />
-          )}
-        />
-      </Box>
+      {data.pageCount > 1 && (
+        <Box
+          sx={{
+            marginBottom: '1em',
+            display: 'flex',
+            justifyContent: 'center',
+          }}
+        >
+          <Pagination
+            count={data.pageCount}
+            defaultPage={page}
+            shape="rounded"
+            color="primary"
+            size="large"
+            renderItem={(item) => (
+              <PaginationItem
+                component={Link}
+                to={item.page === 1 ? '/labels' : `/labels?page=${item.page}`}
+                {...item}
+              />
+            )}
+          />
+        </Box>
+      )}
     </>
   );
 }
