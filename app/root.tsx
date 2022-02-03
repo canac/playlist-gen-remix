@@ -194,7 +194,10 @@ function Layout({ children }: { children: React.ReactNode }) {
                 color="inherit"
                 disabled={pullFetcher.state === 'submitting'}
               >
-                <FontAwesomeIcon icon={faCloudArrowDown} />
+                <FontAwesomeIcon
+                  style={{ height: '1em' }}
+                  icon={faCloudArrowDown}
+                />
               </IconButton>
             </Tooltip>
           </pullFetcher.Form>
@@ -206,7 +209,10 @@ function Layout({ children }: { children: React.ReactNode }) {
                 color="inherit"
                 disabled={pushFetcher.state === 'submitting'}
               >
-                <FontAwesomeIcon icon={faCloudArrowUp} />
+                <FontAwesomeIcon
+                  style={{ height: '1em' }}
+                  icon={faCloudArrowUp}
+                />
               </IconButton>
             </Tooltip>
           </pushFetcher.Form>
