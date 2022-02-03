@@ -1,4 +1,11 @@
-import { useLoaderData, json, redirect, LoaderFunction } from 'remix';
+import { Box, Button } from '@mui/material';
+import {
+  useLoaderData,
+  json,
+  redirect,
+  LoaderFunction,
+  MetaFunction,
+} from 'remix';
 import { getUser } from '~/lib/middleware.server';
 
 type LoginData = {
@@ -16,12 +23,20 @@ export const loader: LoaderFunction = async ({ request }) => {
   });
 };
 
+export const meta: MetaFunction = () => {
+  return {
+    title: 'Playlist Gen | Login',
+  };
+};
+
 export default function Login() {
   const data = useLoaderData<LoginData>();
 
   return (
-    <div style={{ textAlign: 'center' }}>
-      <a href={data.spotifyOauthUrl}>Login with Spotify</a>
-    </div>
+    <Box sx={{ textAlign: 'center', paddingTop: '1em' }}>
+      <Button component="a" href={data.spotifyOauthUrl}>
+        Login with Spotify
+      </Button>
+    </Box>
   );
 }
