@@ -6,7 +6,6 @@ import {
   ListItemButton,
   ListItemText,
 } from '@mui/material';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
   faTrash,
   faPencil,
@@ -15,6 +14,7 @@ import {
 import { useMatch } from 'react-router';
 import { Link, useResolvedPath } from 'remix';
 import { ReactNode } from 'react';
+import FaIcon from '~/components/FaIcon';
 
 function LabelLink({
   labelId,
@@ -34,12 +34,12 @@ function LabelLink({
           <>
             <Link to={`${to}/edit`}>
               <IconButton aria-label="edit">
-                <FontAwesomeIcon icon={faPencil} />
+                <FaIcon icon={faPencil} />
               </IconButton>
             </Link>
             <Link to={`${to}/delete`}>
               <IconButton aria-label="delete" color="error">
-                <FontAwesomeIcon icon={faTrash} />
+                <FaIcon icon={faTrash} />
               </IconButton>
             </Link>
           </>
@@ -71,8 +71,7 @@ export default function LabelList(props: LabelListProps): JSX.Element {
             secondary={
               label.smartCriteria === null ? null : (
                 <>
-                  <FontAwesomeIcon icon={faWandMagicSparkles} />{' '}
-                  {label.smartCriteria}
+                  <FaIcon icon={faWandMagicSparkles} /> {label.smartCriteria}
                 </>
               )
             }

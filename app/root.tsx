@@ -1,4 +1,3 @@
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
   faCloudArrowDown,
   faCloudArrowUp,
@@ -38,6 +37,7 @@ import {
   ScrollRestoration,
   useCatch,
 } from 'remix';
+import FaIcon from '~/components/FaIcon';
 
 import globalStylesUrl from '~/styles/global.css';
 import toastifyStylesUrl from 'react-toastify/dist/ReactToastify.css';
@@ -231,10 +231,7 @@ function Layout({ children }: { children: React.ReactNode }) {
                 color="inherit"
                 disabled={pullFetcher.state === 'submitting'}
               >
-                <FontAwesomeIcon
-                  style={{ height: '1em' }}
-                  icon={faCloudArrowDown}
-                />
+                <FaIcon icon={faCloudArrowDown} />
               </IconButton>
             </Tooltip>
           </pullFetcher.Form>
@@ -246,10 +243,7 @@ function Layout({ children }: { children: React.ReactNode }) {
                 color="inherit"
                 disabled={pushFetcher.state === 'submitting'}
               >
-                <FontAwesomeIcon
-                  style={{ height: '1em' }}
-                  icon={faCloudArrowUp}
-                />
+                <FaIcon icon={faCloudArrowUp} />
               </IconButton>
             </Tooltip>
           </pushFetcher.Form>
@@ -257,7 +251,7 @@ function Layout({ children }: { children: React.ReactNode }) {
             {data?.avatarUrl ? (
               <Avatar alt="User avatar" src={data.avatarUrl} />
             ) : (
-              <FontAwesomeIcon icon={faUser} />
+              <FaIcon icon={faUser} />
             )}
           </IconButton>
           <Menu
