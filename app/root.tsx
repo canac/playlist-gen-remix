@@ -15,6 +15,7 @@ import {
   Tooltip,
   Typography,
 } from '@mui/material';
+import { ToastContainer, toast } from 'react-toastify';
 import {
   useLoaderData,
   json,
@@ -23,7 +24,7 @@ import {
   MetaFunction,
   useFetcher,
 } from 'remix';
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { ensureUser } from '~/lib/middleware.server';
 import {
   Links,
@@ -37,6 +38,7 @@ import {
 } from 'remix';
 
 import globalStylesUrl from '~/styles/global.css';
+import toastifyStylesUrl from 'react-toastify/dist/ReactToastify.css';
 
 type RootData = {
   avatarUrl: string | null;
@@ -49,6 +51,7 @@ export const links: LinksFunction = () => {
       rel: 'stylesheet',
       href: 'https://fonts.googleapis.com/css?family=Roboto:300,400,500,700&display=swap',
     },
+    { rel: 'stylesheet', href: toastifyStylesUrl },
   ];
 };
 
@@ -168,8 +171,28 @@ function Layout({ children }: { children: React.ReactNode }) {
   // useLoaderData can return undefined in the root route if there is an error somewhere
   const data = useLoaderData<RootData | undefined>();
 
-  const pullFetcher = useFetcher();
-  const pushFetcher = useFetcher();
+  const pullFetcher = useFetcher<{ success: boolean }>();
+  const pushFetcher = useFetcher<{ success: boolean }>();
+
+  useEffect(() => {
+    if (pullFetcher.type === 'done') {
+      if (pullFetcher.data.success) {
+        toast.success('Pulling tracks succeeded!', { hideProgressBar: true });
+      } else {
+        toast.error('Pulling tracks failed!', { hideProgressBar: true });
+      }
+    }
+  }, [pullFetcher.type]);
+
+  useEffect(() => {
+    if (pushFetcher.type === 'done') {
+      if (pushFetcher.data.success) {
+        toast.success('Pushing tracks succeeded!', { hideProgressBar: true });
+      } else {
+        toast.error('Pushing tracks failed!', { hideProgressBar: true });
+      }
+    }
+  }, [pushFetcher.type]);
 
   const [anchorEl, setAnchorEl] = useState<HTMLElement | null>(null);
   const openMenu = (event: React.MouseEvent<HTMLElement>) => {
@@ -246,6 +269,7 @@ function Layout({ children }: { children: React.ReactNode }) {
           </Menu>
         </Toolbar>
       </AppBar>
+      <ToastContainer />
       {children}
     </div>
   );
