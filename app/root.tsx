@@ -7,6 +7,7 @@ import {
 import {
   AppBar,
   Avatar,
+  Box,
   Button,
   IconButton,
   Menu,
@@ -23,6 +24,7 @@ import {
   LoaderFunction,
   MetaFunction,
   useFetcher,
+  Link,
 } from 'remix';
 import React, { useEffect, useState } from 'react';
 import { ensureUser } from '~/lib/middleware.server';
@@ -206,9 +208,17 @@ function Layout({ children }: { children: React.ReactNode }) {
     <div className="remix-app">
       <AppBar position="sticky">
         <Toolbar>
-          <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
+          <Typography variant="h4" component="h1" sx={{ marginRight: '1em' }}>
             Playlist Generator
           </Typography>
+          <Box sx={{ flexGrow: 1, display: { xs: 'none', md: 'flex' } }}>
+            <Button component={Link} to="/tracks" color="inherit">
+              Tracks
+            </Button>
+            <Button component={Link} to="/labels" color="inherit">
+              Labels
+            </Button>
+          </Box>
           <pullFetcher.Form action="/sync/pullTracks" method="post">
             <Tooltip title="Pull tracks from Spotify">
               <IconButton

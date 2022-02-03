@@ -73,7 +73,7 @@ export const loader: LoaderFunction = async ({ request }) => {
 
 export const meta: MetaFunction = () => {
   return {
-    title: 'Playlist Gen',
+    title: 'Playlist Gen | Tracks',
     description: 'Generate Spotify playlists from labeled tracks',
   };
 };
