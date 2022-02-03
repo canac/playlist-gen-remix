@@ -20,7 +20,12 @@ export default function PullTracksRoute() {
   return (
     <Box
       component={Form}
-      sx={{ margin: '1em' }}
+      sx={{
+        margin: '1em',
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+      }}
       method="post"
       action="/sync/pullTracks"
     >
