@@ -16,6 +16,8 @@ type FilterData = {
   indexedLabels: Map<number, Set<number>>;
 };
 
+type GetFunc = (value: string) => boolean;
+
 // Use a WeakMap so that as soon as the cache token that the caller is holding
 // onto goes out of scope, the cache item is removed as well
 // Store promises to the filter data to support concurrent requests to getCriteriaMatches.
@@ -80,12 +82,13 @@ export async function getCriteriaMatches(
   // matches the criteria
   const state = parser.save();
   parser.feed(criteria);
-  const evaluator = parser.results[0];
+  const evaluator = parser.results[0] as (get: GetFunc) => void;
   // Save and restore the parser state so that we can reuse the parser instance
   parser.restore(state);
   return tracks.filter((track) =>
-    // Pass the evaluator a method that looks up the values of each value identifier passed in
-    evaluator((value: string): boolean => {
+    // Pass the evaluator a get method that looks up the values of each value
+    // identifier passed in
+    evaluator((value) => {
       if (value === 'explicit') {
         return track.explicit;
       }
