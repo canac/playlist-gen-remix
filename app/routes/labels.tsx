@@ -92,8 +92,8 @@ export const loader: LoaderFunction = async ({ request }) => {
 };
 
 export const meta: MetaFunction = () => ({
-    title: 'Playlist Gen | Labels',
-  });
+  title: 'Playlist Gen | Labels',
+});
 
 export default function Labels() {
   const data = useLoaderData<LabelsData>();

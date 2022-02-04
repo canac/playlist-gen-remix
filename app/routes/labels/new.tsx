@@ -22,8 +22,8 @@ import { validateSmartCriteria } from '~/lib/smartLabel.server';
 import { attemptOr } from '~/lib/util';
 
 export const meta: MetaFunction = () => ({
-    title: 'Playlist Gen | Create label',
-  });
+  title: 'Playlist Gen | Create label',
+});
 
 /*
  * Create a new label.

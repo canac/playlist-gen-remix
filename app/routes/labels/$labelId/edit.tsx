@@ -74,8 +74,8 @@ export const action: ActionFunction = async ({ request, params }) => {
 };
 
 export const meta: MetaFunction = ({ data }: { data: LabelData }) => ({
-    title: `Playlist Gen | Edit Label "${data.label.name}"`,
-  });
+  title: `Playlist Gen | Edit Label "${data.label.name}"`,
+});
 
 export const loader: LoaderFunction = async ({ request, params }) => {
   // Get the user ID from the session

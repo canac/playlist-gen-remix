@@ -72,9 +72,9 @@ export const loader: LoaderFunction = async ({ request }) => {
 };
 
 export const meta: MetaFunction = () => ({
-    title: 'Playlist Gen | Tracks',
-    description: 'Generate Spotify playlists from labeled tracks',
-  });
+  title: 'Playlist Gen | Tracks',
+  description: 'Generate Spotify playlists from labeled tracks',
+});
 
 export default function Index() {
   const data = useLoaderData<IndexData>();
