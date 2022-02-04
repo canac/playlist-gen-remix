@@ -2,6 +2,7 @@
 
 import { User } from '@prisma/client';
 import { chunk, differenceBy, map } from 'lodash';
+import log from 'loglevel';
 import { z } from 'zod';
 import { extractStringFromEnvVar } from './helpers.server';
 import CacheToken from '~/lib/cacheToken';
@@ -58,7 +59,7 @@ async function refreshAccessToken(user: User): Promise<void> {
 async function spotifyFetch(user: User, req: Request): Promise<unknown> {
   if (new Date() > user.accessTokenExpiresAt) {
     // The access token is expired, so preemptively refresh it
-    console.log('Expired access token, retrying...');
+    log.info('Expired access token, retrying...');
     await refreshAccessToken(user);
   }
 
@@ -67,14 +68,14 @@ async function spotifyFetch(user: User, req: Request): Promise<unknown> {
   authorizedReq.headers.set('Authorization', `Bearer ${user.accessToken}`);
   authorizedReq.headers.set('Accept', 'application/json');
 
-  console.log(`${req.method} ${req.url}`);
+  log.info(`${req.method} ${req.url}`);
   const res = await fetch(authorizedReq);
-  console.log(`Status: ${res.status}`);
+  log.info(`Status: ${res.status}`);
 
   const body: unknown = await res.json();
   if (!res.ok) {
-    console.error('Spotify API error:');
-    console.error(body);
+    log.error('Spotify API error:');
+    log.error(body);
     throw res;
   }
 
@@ -229,7 +230,7 @@ export async function syncPlaylists(user: User): Promise<void> {
         smartCriteria,
         cacheToken,
       ).catch((err) => {
-        console.error(err);
+        log.error(err);
         return [];
       });
       tracks = await getMatchesPromise;

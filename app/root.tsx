@@ -15,6 +15,7 @@ import {
   Tooltip,
   Typography,
 } from '@mui/material';
+import log from 'loglevel';
 import React, { useEffect, useState } from 'react';
 import { ToastContainer, toast } from 'react-toastify';
 import toastifyStylesUrl from 'react-toastify/dist/ReactToastify.css';
@@ -37,6 +38,8 @@ import {
 } from 'remix';
 import FaIcon from '~/components/FaIcon';
 import { ensureUser } from '~/lib/middleware.server';
+
+log.setDefaultLevel('info');
 
 type RootData = {
   avatarUrl: string | null;
@@ -210,7 +213,7 @@ function Layout({ children }: { children: React.ReactNode }) {
 }
 
 export function ErrorBoundary({ error }: { error: Error }) {
-  console.error(error);
+  log.error(error);
   return (
     <Document title="Error!">
       <Layout>
