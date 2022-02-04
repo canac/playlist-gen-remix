@@ -6,6 +6,7 @@ import {
   LoaderFunction,
   MetaFunction,
 } from 'remix';
+import { extractStringFromEnvVar } from '~/lib/helpers.server';
 import { getUser } from '~/lib/middleware.server';
 
 type LoginData = {
@@ -13,14 +14,36 @@ type LoginData = {
 };
 
 export const loader: LoaderFunction = async ({ request }) => {
+  const redirectUri = new URL(request.url).searchParams.get('redirect') ?? '/';
+
   if ((await getUser(request)) !== null) {
     // Redirect to the home page if the user is already logged in
-    return redirect('/');
+    return redirect(redirectUri);
   }
 
-  return json<LoginData>({
-    spotifyOauthUrl: `https://accounts.spotify.com/authorize?response_type=code&client_id=${process.env.SPOTIFY_CLIENT_ID}&scope=user-library-read,playlist-read-private,playlist-modify-private&redirect_uri=${process.env.DOMAIN}/auth/oauth_callback`,
+  const state = await sign(
+    redirectUri,
+    extractStringFromEnvVar('COOKIE_SECRET'),
+  );
+  const qs = new URLSearchParams({
+    response_type: 'code',
+    client_id: extractStringFromEnvVar('SPOTIFY_CLIENT_ID'),
+    scope: 'user-library-read,playlist-read-private,playlist-modify-private',
+    redirect_uri: `${extractStringFromEnvVar('DOMAIN')}/auth/oauth_callback`,
+    state,
   });
+  return json<LoginData>(
+    {
+      spotifyOauthUrl: `https://accounts.spotify.com/authorize?${qs}`,
+    },
+    {
+      headers: {
+        'Set-Cookie': `state=${state}; Max-Age=${
+          15 * 60 * 1000
+        }; Path=/auth; HttpOnly; SameSite=Strict; Secure`,
+      },
+    },
+  );
 };
 
 export const meta: MetaFunction = () => {

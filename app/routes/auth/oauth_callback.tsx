@@ -1,5 +1,6 @@
+import { Box, Typography } from '@mui/material';
 import { useEffect } from 'react';
-import { Link, LoaderFunction } from 'remix';
+import { json, Link, LoaderFunction, useLoaderData } from 'remix';
 import { commitSession, getSession } from '~/lib/sessions.server';
 import { z } from 'zod';
 import {
@@ -27,11 +28,21 @@ const ProfileResponse = z.object({
   ),
 });
 
+type LoaderData = {
+  redirectUri: string;
+};
+
 export const loader: LoaderFunction = async ({ request }) => {
-  const code = extractStringFromSearchParams(
-    new URL(request.url).searchParams,
-    'code',
+  const searchParams = new URL(request.url).searchParams;
+  const code = extractStringFromSearchParams(searchParams, 'code');
+  const state = extractStringFromSearchParams(searchParams, 'state');
+  const redirectUri = await unsign(
+    state,
+    extractStringFromEnvVar('COOKIE_SECRET'),
   );
+  if (redirectUri === false) {
+    throw new Response('Invalid OAuth state', { status: 500 });
+  }
 
   // Exchange the code for an access token
   const body = new URLSearchParams();
@@ -89,25 +100,26 @@ export const loader: LoaderFunction = async ({ request }) => {
   const session = await getSession();
   session.set('userId', userId);
 
-  return new Response('', {
-    headers: {
-      'Set-Cookie': await commitSession(session),
-    },
-  });
+  const headers = new Headers();
+  headers.append('Set-Cookie', await commitSession(session));
+  headers.append('Set-Cookie', 'state=; Max-Age=0; Path=/auth');
+  return json<LoaderData>({ redirectUri }, { headers });
 };
 
-export default function Login() {
+export default function OauthCallback() {
+  const { redirectUri } = useLoaderData<LoaderData>();
+
   useEffect(() => {
-    document.location = '/';
+    document.location = redirectUri;
   });
 
   return (
-    <div className="page">
-      <p>Logging you in...</p>
-      <p>
-        Click <Link to="/">here</Link> to return to the site if you are not
-        redirected automatically.
-      </p>
-    </div>
+    <Box sx={{ margin: '1em' }}>
+      <Typography>Logging you in...</Typography>
+      <Typography>
+        Click <Link to={redirectUri}>here</Link> to return to the site if you
+        are not redirected automatically.
+      </Typography>
+    </Box>
   );
 }

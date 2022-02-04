@@ -16,7 +16,11 @@ export async function getUserId(request: Request): Promise<number | null> {
 export async function ensureAuthenticated(request: Request): Promise<number> {
   const userId = await getUserId(request);
   if (userId === null) {
-    throw redirect('/auth/login');
+    throw redirect(
+      `/auth/login?redirect=${encodeURIComponent(
+        new URL(request.url).pathname,
+      )}`,
+    );
   }
 
   return userId;
@@ -40,7 +44,11 @@ export async function getUser(request: Request): Promise<User | null> {
 export async function ensureUser(request: Request): Promise<User> {
   const user = await getUser(request);
   if (!user) {
-    throw redirect('/auth/login');
+    throw redirect(
+      `/auth/login?redirect=${encodeURIComponent(
+        new URL(request.url).pathname,
+      )}`,
+    );
   }
 
   return user;
