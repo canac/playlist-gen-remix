@@ -39,7 +39,6 @@ import {
 } from 'remix';
 import FaIcon from '~/components/FaIcon';
 
-import globalStylesUrl from '~/styles/global.css';
 import toastifyStylesUrl from 'react-toastify/dist/ReactToastify.css';
 
 type RootData = {
@@ -47,14 +46,7 @@ type RootData = {
 };
 
 export const links: LinksFunction = () => {
-  return [
-    { rel: 'stylesheet', href: globalStylesUrl },
-    {
-      rel: 'stylesheet',
-      href: 'https://fonts.googleapis.com/css?family=Roboto:300,400,500,700&display=swap',
-    },
-    { rel: 'stylesheet', href: toastifyStylesUrl },
-  ];
+  return [{ rel: 'stylesheet', href: toastifyStylesUrl }];
 };
 
 export const meta: MetaFunction = () => {
@@ -143,7 +135,7 @@ function Document({
         <Meta />
         <Links />
       </head>
-      <body>
+      <body style={{ fontFamily: 'Arial, Helvetica, sans-serif', margin: 0 }}>
         {children}
         <ScrollRestoration />
         <Scripts />
@@ -209,7 +201,7 @@ function Layout({ children }: { children: React.ReactNode }) {
   };
 
   return (
-    <div className="remix-app">
+    <div>
       <AppBar position="sticky">
         <Toolbar>
           <Typography
