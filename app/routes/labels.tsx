@@ -1,5 +1,5 @@
 import { Box, Pagination, PaginationItem } from '@mui/material';
-import { Label, Track } from '@prisma/client';
+import { Label } from '@prisma/client';
 import {
   useLoaderData,
   json,
@@ -97,7 +97,7 @@ export const meta: MetaFunction = () => {
   };
 };
 
-export default function Index() {
+export default function Labels() {
   const data = useLoaderData<LabelsData>();
 
   const [page] = React.useState(data.pageIndex + 1);
