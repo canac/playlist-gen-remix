@@ -1,20 +1,20 @@
 import { Box, Button } from '@mui/material';
-import { redirect, ActionFunction, Form, MetaFunction } from 'remix';
-import { getSession, destroySession } from '~/lib/sessions.server';
+import { ActionFunction, Form, MetaFunction, redirect } from 'remix';
+import { sessionStorage } from '~/lib/sessions.server';
 
 // Log the user out and redirect them to the login page
 export const action: ActionFunction = async ({ request }) => {
-  const session = await getSession(request.headers.get('Cookie'));
+  const session = await sessionStorage.getSession(
+    request.headers.get('Cookie'),
+  );
   return redirect('/auth/login', {
-    headers: { 'Set-Cookie': await destroySession(session) },
+    headers: { 'Set-Cookie': await sessionStorage.destroySession(session) },
   });
 };
 
-export const meta: MetaFunction = () => {
-  return {
-    title: 'Playlist Gen | Logout',
-  };
-};
+export const meta: MetaFunction = () => ({
+  title: 'Playlist Gen | Logout',
+});
 
 // Form to support no-JS
 export default function LogoutRoute() {

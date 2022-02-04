@@ -1,13 +1,13 @@
 import { Box, Typography } from '@mui/material';
 import { useEffect } from 'react';
-import { json, Link, LoaderFunction, useLoaderData } from 'remix';
-import { commitSession, getSession } from '~/lib/sessions.server';
+import { Link, LoaderFunction, json, useLoaderData } from 'remix';
 import { z } from 'zod';
 import {
   extractStringFromEnvVar,
   extractStringFromSearchParams,
 } from '~/lib/helpers.server';
 import { prisma } from '~/lib/prisma.server';
+import { sessionStorage } from '~/lib/sessions.server';
 
 // POST https://accounts.spotify.com/api/token
 // Only includes fields that we care about
@@ -33,7 +33,7 @@ type LoaderData = {
 };
 
 export const loader: LoaderFunction = async ({ request }) => {
-  const searchParams = new URL(request.url).searchParams;
+  const { searchParams } = new URL(request.url);
   const code = extractStringFromSearchParams(searchParams, 'code');
   const state = extractStringFromSearchParams(searchParams, 'state');
   const redirectUri = await unsign(
@@ -97,11 +97,11 @@ export const loader: LoaderFunction = async ({ request }) => {
   });
 
   // Save the user id to the session
-  const session = await getSession();
+  const session = await sessionStorage.getSession();
   session.set('userId', userId);
 
   const headers = new Headers();
-  headers.append('Set-Cookie', await commitSession(session));
+  headers.append('Set-Cookie', await sessionStorage.commitSession(session));
   headers.append('Set-Cookie', 'state=; Max-Age=0; Path=/auth');
   return json<LoaderData>({ redirectUri }, { headers });
 };

@@ -1,5 +1,5 @@
-import { Label, Track } from '@prisma/client';
 import { List } from '@mui/material';
+import { Label, Track } from '@prisma/client';
 import TrackItem from './TrackItem';
 
 export type TrackListProps = {

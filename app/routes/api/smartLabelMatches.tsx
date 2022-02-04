@@ -19,7 +19,7 @@ export const action: ActionFunction = async ({ request }) => {
   try {
     const matches = await getCriteriaMatches(userId, smartCriteria);
     return json({ success: true, matchCount: matches.length });
-  } catch (err) {
-    return json({ success: false, err }, { status: 500 });
+  } catch (error) {
+    return json({ success: false, error }, { status: 500 });
   }
 };

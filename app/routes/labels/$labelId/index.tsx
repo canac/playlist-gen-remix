@@ -1,5 +1,5 @@
 import { Label } from '@prisma/client';
-import { useLoaderData, json, LoaderFunction, MetaFunction } from 'remix';
+import { LoaderFunction, MetaFunction, json } from 'remix';
 import { extractIntFromParam } from '~/lib/helpers.server';
 import { ensureAuthenticated } from '~/lib/middleware.server';
 import { prisma } from '~/lib/prisma.server';
@@ -29,14 +29,10 @@ export const loader: LoaderFunction = async ({ request, params }) => {
   });
 };
 
-export const meta: MetaFunction = ({ data }: { data: LabelData }) => {
-  return {
-    title: `Playlist Gen | Label "${data.label.name}"`,
-  };
-};
+export const meta: MetaFunction = ({ data }: { data: LabelData }) => ({
+  title: `Playlist Gen | Label "${data.label.name}"`,
+});
 
 export default function LabelRoute() {
-  const data = useLoaderData<LabelData>();
-
   return null;
 }

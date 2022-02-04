@@ -1,13 +1,15 @@
 import { User } from '@prisma/client';
 import { redirect } from 'remix';
-import { getSession } from '~/lib/sessions.server';
 import { prisma } from '~/lib/prisma.server';
+import { sessionStorage } from '~/lib/sessions.server';
 
 // Extract the user id from the session, returning null if the user isn't logged in
 // Note that this is the User.id field in the database, not the Spotify user id
 export async function getUserId(request: Request): Promise<number | null> {
-  const session = await getSession(request.headers.get('Cookie'));
-  const userId = session.get('userId');
+  const session = await sessionStorage.getSession(
+    request.headers.get('Cookie'),
+  );
+  const userId: unknown = session.get('userId');
   return typeof userId === 'number' ? userId : null;
 }
 

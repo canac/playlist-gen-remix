@@ -10,9 +10,9 @@ import { useState } from 'react';
 import {
   ActionFunction,
   Form,
-  json,
   LoaderFunction,
   MetaFunction,
+  json,
   redirect,
   useLoaderData,
 } from 'remix';
@@ -51,11 +51,9 @@ export const action: ActionFunction = async ({ request, params }) => {
   return redirect(`/labels`);
 };
 
-export const meta: MetaFunction = ({ data }: { data: LabelData }) => {
-  return {
+export const meta: MetaFunction = ({ data }: { data: LabelData }) => ({
     title: `Playlist Gen | Delete Label "${data.label.name}"`,
-  };
-};
+  });
 
 export const loader: LoaderFunction = async ({ request, params }) => {
   // Get the user ID from the session

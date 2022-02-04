@@ -1,9 +1,9 @@
 import { Track } from '@prisma/client';
 import { map } from 'lodash';
-import { Parser, Grammar } from 'nearley';
+import { Grammar, Parser } from 'nearley';
+import CacheToken from '~/lib/cacheToken';
 import grammar from '~/lib/labelGrammar.server';
 import { prisma } from '~/lib/prisma.server';
-import CacheToken from '~/lib/cacheToken';
 
 // Initialize the parser for the smart label criteria
 const parser = new Parser(Grammar.fromCompiled(grammar));

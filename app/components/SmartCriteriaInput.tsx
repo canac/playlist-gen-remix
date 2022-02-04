@@ -1,10 +1,12 @@
 import { TextField, TextFieldProps, Typography } from '@mui/material';
 import { debounce } from 'lodash';
-import { useFetcher } from 'remix';
 import { useEffect } from 'react';
+import { useFetcher } from 'remix';
 
 export default function SmartCriteriaInput(props: TextFieldProps): JSX.Element {
-  const fetcher = useFetcher();
+  const fetcher = useFetcher<
+    { success: true; matchCount: number } | { success: false; error: Error }
+  >();
 
   function loadCriteriaMatches(smartCriteria: string) {
     const form = new URLSearchParams();
@@ -15,11 +17,12 @@ export default function SmartCriteriaInput(props: TextFieldProps): JSX.Element {
     });
   }
 
-  // Load the initial smart criteria matches
+  // Load the initial smart criteria matches on component load
   useEffect(() => {
     if (typeof props.defaultValue === 'string') {
       loadCriteriaMatches(props.defaultValue);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   return (
@@ -27,7 +30,8 @@ export default function SmartCriteriaInput(props: TextFieldProps): JSX.Element {
       <TextField
         {...props}
         onChange={debounce(
-          (event) => loadCriteriaMatches(event.target.value),
+          (event: React.ChangeEvent<HTMLInputElement>) =>
+            loadCriteriaMatches(event.target.value),
           200,
         )}
       />

@@ -15,109 +15,40 @@ import {
   Tooltip,
   Typography,
 } from '@mui/material';
-import { ToastContainer, toast } from 'react-toastify';
-import {
-  useLoaderData,
-  json,
-  Form,
-  LoaderFunction,
-  MetaFunction,
-  useFetcher,
-  Link,
-} from 'remix';
 import React, { useEffect, useState } from 'react';
-import { ensureUser } from '~/lib/middleware.server';
+import { ToastContainer, toast } from 'react-toastify';
+import toastifyStylesUrl from 'react-toastify/dist/ReactToastify.css';
 import {
+  Form,
+  Link,
   Links,
   LinksFunction,
   LiveReload,
+  LoaderFunction,
   Meta,
+  MetaFunction,
   Outlet,
   Scripts,
   ScrollRestoration,
+  json,
   useCatch,
+  useFetcher,
+  useLoaderData,
 } from 'remix';
 import FaIcon from '~/components/FaIcon';
-
-import toastifyStylesUrl from 'react-toastify/dist/ReactToastify.css';
+import { ensureUser } from '~/lib/middleware.server';
 
 type RootData = {
   avatarUrl: string | null;
 };
 
-export const links: LinksFunction = () => {
-  return [{ rel: 'stylesheet', href: toastifyStylesUrl }];
-};
+export const links: LinksFunction = () => [
+  { rel: 'stylesheet', href: toastifyStylesUrl },
+];
 
-export const meta: MetaFunction = () => {
-  return {
-    description: 'Generate Spotify playlists from labeled tracks',
-  };
-};
-
-export default function App() {
-  return (
-    <Document>
-      <Layout>
-        <Outlet />
-      </Layout>
-    </Document>
-  );
-}
-
-export function ErrorBoundary({ error }: { error: Error }) {
-  console.error(error);
-  return (
-    <Document title="Error!">
-      <Layout>
-        <div>
-          <h1>There was an error</h1>
-          <p>{error.message}</p>
-          <hr />
-          <p>
-            Hey, developer, you should replace this with what you want your
-            users to see.
-          </p>
-        </div>
-      </Layout>
-    </Document>
-  );
-}
-
-export function CatchBoundary() {
-  const caught = useCatch();
-
-  let message;
-  switch (caught.status) {
-    case 401:
-      message = (
-        <p>
-          Oops! Looks like you tried to visit a page that you do not have access
-          to.
-        </p>
-      );
-      break;
-    case 404:
-      message = (
-        <p>Oops! Looks like you tried to visit a page that does not exist.</p>
-      );
-      break;
-
-    default:
-      throw new Error(caught.data || caught.statusText);
-  }
-
-  return (
-    <Document title={`${caught.status} ${caught.statusText}`}>
-      <Layout>
-        <h1>
-          {caught.status}: {caught.statusText}
-        </h1>
-        {message}
-      </Layout>
-    </Document>
-  );
-}
+export const meta: MetaFunction = () => ({
+  description: 'Generate Spotify playlists from labeled tracks',
+});
 
 function Document({
   children,
@@ -159,9 +90,8 @@ export const loader: LoaderFunction = async ({ request }) => {
       return json<RootData>({
         avatarUrl: null,
       });
-    } else {
-      throw err;
     }
+    throw err;
   }
 };
 
@@ -180,7 +110,7 @@ function Layout({ children }: { children: React.ReactNode }) {
         toast.error('Pulling tracks failed!', { hideProgressBar: true });
       }
     }
-  }, [pullFetcher.type]);
+  }, [pullFetcher.type, pullFetcher.data?.success]);
 
   useEffect(() => {
     if (pushFetcher.type === 'done') {
@@ -190,7 +120,7 @@ function Layout({ children }: { children: React.ReactNode }) {
         toast.error('Pushing tracks failed!', { hideProgressBar: true });
       }
     }
-  }, [pushFetcher.type]);
+  }, [pushFetcher.type, pushFetcher.data?.success]);
 
   const [anchorEl, setAnchorEl] = useState<HTMLElement | null>(null);
   const openMenu = (event: React.MouseEvent<HTMLElement>) => {
@@ -276,5 +206,71 @@ function Layout({ children }: { children: React.ReactNode }) {
       <ToastContainer />
       {children}
     </div>
+  );
+}
+
+export function ErrorBoundary({ error }: { error: Error }) {
+  console.error(error);
+  return (
+    <Document title="Error!">
+      <Layout>
+        <div>
+          <h1>There was an error</h1>
+          <p>{error.message}</p>
+          <hr />
+          <p>
+            Hey, developer, you should replace this with what you want your
+            users to see.
+          </p>
+        </div>
+      </Layout>
+    </Document>
+  );
+}
+
+export function CatchBoundary() {
+  const caught = useCatch();
+
+  let message;
+  switch (caught.status) {
+    case 401:
+      message = (
+        <p>
+          Oops! Looks like you tried to visit a page that you do not have access
+          to.
+        </p>
+      );
+      break;
+    case 404:
+      message = (
+        <p>Oops! Looks like you tried to visit a page that does not exist.</p>
+      );
+      break;
+
+    default:
+      throw new Error(
+        caught.data ? JSON.stringify(caught.data) : caught.statusText,
+      );
+  }
+
+  return (
+    <Document title={`${caught.status} ${caught.statusText}`}>
+      <Layout>
+        <h1>
+          {caught.status}: {caught.statusText}
+        </h1>
+        {message}
+      </Layout>
+    </Document>
+  );
+}
+
+export default function App() {
+  return (
+    <Document>
+      <Layout>
+        <Outlet />
+      </Layout>
+    </Document>
   );
 }

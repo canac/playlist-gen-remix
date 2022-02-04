@@ -3,20 +3,20 @@ import { Label } from '@prisma/client';
 import {
   ActionFunction,
   Form,
-  json,
   LoaderFunction,
   MetaFunction,
+  json,
   useLoaderData,
 } from 'remix';
+import SmartCriteriaInput from '~/components/SmartCriteriaInput';
 import {
   extractIntFromParam,
   extractStringFromFormData,
 } from '~/lib/helpers.server';
 import { ensureAuthenticated } from '~/lib/middleware.server';
+import { prisma } from '~/lib/prisma.server';
 import { validateSmartCriteria } from '~/lib/smartLabel.server';
 import { attemptOr } from '~/lib/util';
-import { prisma } from '~/lib/prisma.server';
-import SmartCriteriaInput from '~/components/SmartCriteriaInput';
 
 type LabelData = {
   label: Label;
@@ -73,11 +73,9 @@ export const action: ActionFunction = async ({ request, params }) => {
   return json({ success: true });
 };
 
-export const meta: MetaFunction = ({ data }: { data: LabelData }) => {
-  return {
+export const meta: MetaFunction = ({ data }: { data: LabelData }) => ({
     title: `Playlist Gen | Edit Label "${data.label.name}"`,
-  };
-};
+  });
 
 export const loader: LoaderFunction = async ({ request, params }) => {
   // Get the user ID from the session

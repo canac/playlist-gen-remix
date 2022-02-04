@@ -1,19 +1,19 @@
 import { Box, Pagination, PaginationItem } from '@mui/material';
 import { Label, Track } from '@prisma/client';
+import React from 'react';
 import {
-  useLoaderData,
-  json,
-  redirect,
   Link,
   LoaderFunction,
   MetaFunction,
+  json,
+  redirect,
+  useLoaderData,
 } from 'remix';
-import React from 'react';
 import TrackList from '~/components/TrackList';
-import { ensureAuthenticated } from '~/lib/middleware.server';
 import { extractIntFromSearchParams } from '~/lib/helpers.server';
-import { attemptOr } from '~/lib/util';
+import { ensureAuthenticated } from '~/lib/middleware.server';
 import { prisma } from '~/lib/prisma.server';
+import { attemptOr } from '~/lib/util';
 
 type IndexData = {
   tracks: (Track & {
@@ -71,12 +71,10 @@ export const loader: LoaderFunction = async ({ request }) => {
   });
 };
 
-export const meta: MetaFunction = () => {
-  return {
+export const meta: MetaFunction = () => ({
     title: 'Playlist Gen | Tracks',
     description: 'Generate Spotify playlists from labeled tracks',
-  };
-};
+  });
 
 export default function Index() {
   const data = useLoaderData<IndexData>();

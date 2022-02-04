@@ -1,4 +1,8 @@
-import { Label } from '@prisma/client';
+import {
+  faPencil,
+  faTrash,
+  faWandMagicSparkles,
+} from '@fortawesome/free-solid-svg-icons';
 import {
   IconButton,
   List,
@@ -6,14 +10,10 @@ import {
   ListItemButton,
   ListItemText,
 } from '@mui/material';
-import {
-  faTrash,
-  faPencil,
-  faWandMagicSparkles,
-} from '@fortawesome/free-solid-svg-icons';
+import { Label } from '@prisma/client';
+import { ReactNode } from 'react';
 import { useMatch } from 'react-router';
 import { Link, useResolvedPath } from 'remix';
-import { ReactNode } from 'react';
 import FaIcon from '~/components/FaIcon';
 
 function LabelLink({

@@ -8,24 +8,22 @@ import {
 } from '@mui/material';
 import { useState } from 'react';
 import {
+  ActionFunction,
+  Form,
   LoaderFunction,
   MetaFunction,
-  Form,
-  ActionFunction,
   redirect,
 } from 'remix';
 import SmartCriteriaInput from '~/components/SmartCriteriaInput';
 import { extractStringFromFormData } from '~/lib/helpers.server';
 import { ensureAuthenticated } from '~/lib/middleware.server';
+import { prisma } from '~/lib/prisma.server';
 import { validateSmartCriteria } from '~/lib/smartLabel.server';
 import { attemptOr } from '~/lib/util';
-import { prisma } from '~/lib/prisma.server';
 
-export const meta: MetaFunction = () => {
-  return {
+export const meta: MetaFunction = () => ({
     title: 'Playlist Gen | Create label',
-  };
-};
+  });
 
 /*
  * Create a new label.

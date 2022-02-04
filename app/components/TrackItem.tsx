@@ -1,16 +1,16 @@
-import { Label, Track } from '@prisma/client';
 import {
   Autocomplete,
   Avatar,
   Checkbox,
   ListItem,
-  ListItemText,
   ListItemAvatar,
+  ListItemText,
   TextField,
   createFilterOptions,
 } from '@mui/material';
-import { useFetcher } from 'remix';
+import { Label, Track } from '@prisma/client';
 import { useEffect, useState } from 'react';
+import { useFetcher } from 'remix';
 
 export type TrackItemProps = {
   track: Track & {
@@ -25,15 +25,16 @@ const filter = createFilterOptions<Label>();
 // It must be a value that is impossible in the database
 const createNewLabelId = 0;
 
-export default function TrackItem(props: TrackItemProps): JSX.Element {
-  const track = props.track;
-
-  const [labelsState, setLabels] = useState(props.track.labels);
+export default function TrackItem({
+  labels,
+  track,
+}: TrackItemProps): JSX.Element {
+  const [labelsState, setLabels] = useState(track.labels);
 
   // Automatically update the tracks' labels whenever they are changed by the server
   useEffect(() => {
-    setLabels(props.track.labels);
-  }, [props.track.labels]);
+    setLabels(track.labels);
+  }, [track.labels]);
 
   const fetcher = useFetcher();
 
@@ -50,7 +51,7 @@ export default function TrackItem(props: TrackItemProps): JSX.Element {
       <Autocomplete
         multiple
         value={labelsState}
-        options={props.labels}
+        options={labels}
         filterOptions={(options, params) => {
           const filtered = filter(options, params);
 
@@ -93,17 +94,16 @@ export default function TrackItem(props: TrackItemProps): JSX.Element {
               // sentinel value, which causes issues because it doesn't have an id that
               // matches an existing label
               return;
-            } else {
-              // Add the label to the track on the server
-              const form = new URLSearchParams();
-              form.set('trackId', track.id.toString());
-              form.set('labelId', label.id.toString());
-              fetcher.submit(form, {
-                method: 'post',
-                action: '/tracks/addLabel',
-                replace: true,
-              });
             }
+            // Add the label to the track on the server
+            const form = new URLSearchParams();
+            form.set('trackId', track.id.toString());
+            form.set('labelId', label.id.toString());
+            fetcher.submit(form, {
+              method: 'post',
+              action: '/tracks/addLabel',
+              replace: true,
+            });
           } else if (label && reason === 'removeOption') {
             // Remove the label from the track on the server
             const form = new URLSearchParams();

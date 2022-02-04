@@ -1,22 +1,22 @@
 import { Box, Pagination, PaginationItem } from '@mui/material';
 import { Label } from '@prisma/client';
+import React from 'react';
 import {
-  useLoaderData,
-  json,
-  redirect,
   Link,
   LoaderFunction,
   MetaFunction,
   Outlet,
+  json,
+  redirect,
+  useLoaderData,
 } from 'remix';
-import React from 'react';
 import LabelList from '~/components/LabelList';
-import { ensureAuthenticated } from '~/lib/middleware.server';
+import CacheToken from '~/lib/cacheToken';
 import { extractIntFromSearchParams } from '~/lib/helpers.server';
-import { attemptOr } from '~/lib/util';
+import { ensureAuthenticated } from '~/lib/middleware.server';
 import { prisma } from '~/lib/prisma.server';
 import { getCriteriaMatches } from '~/lib/smartLabel.server';
-import CacheToken from '~/lib/cacheToken';
+import { attemptOr } from '~/lib/util';
 
 type LabelsData = {
   labels: (Label & {
@@ -91,11 +91,9 @@ export const loader: LoaderFunction = async ({ request }) => {
   });
 };
 
-export const meta: MetaFunction = () => {
-  return {
+export const meta: MetaFunction = () => ({
     title: 'Playlist Gen | Labels',
-  };
-};
+  });
 
 export default function Labels() {
   const data = useLoaderData<LabelsData>();

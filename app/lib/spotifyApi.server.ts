@@ -3,39 +3,10 @@
 import { User } from '@prisma/client';
 import { chunk, differenceBy, map } from 'lodash';
 import { z } from 'zod';
+import { extractStringFromEnvVar } from './helpers.server';
+import CacheToken from '~/lib/cacheToken';
 import { prisma } from '~/lib/prisma.server';
 import { getCriteriaMatches } from '~/lib/smartLabel.server';
-import CacheToken from '~/lib/cacheToken';
-
-// Make a request to the Spotify API
-// This function takes care of adding the Spotify access token to the request
-// and retrying failures due to an expired access token
-// Return the response body JSON
-async function spotifyFetch(user: User, req: Request): Promise<unknown> {
-  if (new Date() > user.accessTokenExpiresAt) {
-    // The access token is expired, so preemptively refresh it
-    console.log('Expired access token, retrying...');
-    await refreshAccessToken(user);
-  }
-
-  // Add the authorization headers to the provided request
-  const authorizedReq = new Request(req.url, req);
-  authorizedReq.headers.set('Authorization', `Bearer ${user.accessToken}`);
-  authorizedReq.headers.set('Accept', 'application/json');
-
-  console.log(`${req.method} ${req.url}`);
-  const res = await fetch(authorizedReq);
-  console.log(`Status: ${res.status}`);
-
-  const body = await res.json();
-  if (!res.ok) {
-    console.error('Spotify API error:');
-    console.error(body);
-    throw res;
-  }
-
-  return body;
-}
 
 // POST https://accounts.spotify.com/api/token
 // Only includes fields that we care about
@@ -50,7 +21,9 @@ async function refreshAccessToken(user: User): Promise<void> {
   const body = new URLSearchParams();
   body.append('grant_type', 'refresh_token');
   body.append('refresh_token', user.refreshToken);
-  const authorization = `${process.env.SPOTIFY_CLIENT_ID}:${process.env.SPOTIFY_CLIENT_SECRET}`;
+  const authorization = `${extractStringFromEnvVar(
+    'SPOTIFY_CLIENT_ID',
+  )}:${extractStringFromEnvVar('SPOTIFY_CLIENT_SECRET')}`;
   const tokenRes = await fetch('https://accounts.spotify.com/api/token', {
     method: 'POST',
     body,
@@ -76,6 +49,36 @@ async function refreshAccessToken(user: User): Promise<void> {
     data: modifiedFields,
   });
   Object.assign(user, modifiedFields);
+}
+
+// Make a request to the Spotify API
+// This function takes care of adding the Spotify access token to the request
+// and retrying failures due to an expired access token
+// Return the response body JSON
+async function spotifyFetch(user: User, req: Request): Promise<unknown> {
+  if (new Date() > user.accessTokenExpiresAt) {
+    // The access token is expired, so preemptively refresh it
+    console.log('Expired access token, retrying...');
+    await refreshAccessToken(user);
+  }
+
+  // Add the authorization headers to the provided request
+  const authorizedReq = new Request(req.url, req);
+  authorizedReq.headers.set('Authorization', `Bearer ${user.accessToken}`);
+  authorizedReq.headers.set('Accept', 'application/json');
+
+  console.log(`${req.method} ${req.url}`);
+  const res = await fetch(authorizedReq);
+  console.log(`Status: ${res.status}`);
+
+  const body: unknown = await res.json();
+  if (!res.ok) {
+    console.error('Spotify API error:');
+    console.error(body);
+    throw res;
+  }
+
+  return body;
 }
 
 // GET https://api.spotify.com/v1/me/tracks
@@ -112,6 +115,8 @@ export async function syncFavoriteTracks(user: User): Promise<void> {
   let offset = 0;
   let limit = 5;
 
+  /* eslint-disable no-await-in-loop */
+  // eslint-disable-next-line no-constant-condition
   while (true) {
     // Get the user's most recent favorite tracks from Spotify
     const tracks = TracksResponse.parse(
@@ -156,6 +161,7 @@ export async function syncFavoriteTracks(user: User): Promise<void> {
       break;
     }
   }
+  /* eslint-enable no-await-in-loop */
 }
 
 // POST https://api.spotify.com/v1/me/playlists
@@ -213,7 +219,7 @@ export async function syncPlaylists(user: User): Promise<void> {
   for (const playlist of dbPlaylists) {
     const dummyTrackSpotifyId = '41MCdlvXOl62B7Kv86Bb1v';
 
-    let tracks = playlist.label.tracks;
+    let { tracks } = playlist.label;
 
     // Override the tracks for smart labels
     const { smartCriteria } = playlist.label;
@@ -235,14 +241,12 @@ export async function syncPlaylists(user: User): Promise<void> {
     // to query the playlist for all of it's ids, possibly in multiple batches, and then
     // remove all of those ids, possibly in multiple batches
     const trackSpotifyIds = map(tracks, 'spotifyId');
-    console.log(trackSpotifyIds);
     for (const [index, spotifyIds] of chunk(
       trackSpotifyIds.length > 0 ? trackSpotifyIds : [dummyTrackSpotifyId],
       // Send 50 tracks at a time
       50,
     ).entries()) {
       const uris = spotifyIds.map((spotifyId) => `spotify:track:${spotifyId}`);
-      console.log(uris);
       await spotifyFetch(
         user,
         new Request(
@@ -261,7 +265,7 @@ export async function syncPlaylists(user: User): Promise<void> {
 
     // If the playlist needs to be emptied, remove the dummy track that we added to it
     if (playlist.label.tracks.length === 0) {
-      const res = await spotifyFetch(
+      await spotifyFetch(
         user,
         new Request(
           `https://api.spotify.com/v1/playlists/${playlist.spotifyId}/tracks`,

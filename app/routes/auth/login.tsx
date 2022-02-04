@@ -1,10 +1,10 @@
 import { Box, Button } from '@mui/material';
 import {
-  useLoaderData,
-  json,
-  redirect,
   LoaderFunction,
   MetaFunction,
+  json,
+  redirect,
+  useLoaderData,
 } from 'remix';
 import { extractStringFromEnvVar } from '~/lib/helpers.server';
 import { getUser } from '~/lib/middleware.server';
@@ -34,7 +34,7 @@ export const loader: LoaderFunction = async ({ request }) => {
   });
   return json<LoginData>(
     {
-      spotifyOauthUrl: `https://accounts.spotify.com/authorize?${qs}`,
+      spotifyOauthUrl: `https://accounts.spotify.com/authorize?${qs.toString()}`,
     },
     {
       headers: {
@@ -46,11 +46,9 @@ export const loader: LoaderFunction = async ({ request }) => {
   );
 };
 
-export const meta: MetaFunction = () => {
-  return {
-    title: 'Playlist Gen | Login',
-  };
-};
+export const meta: MetaFunction = () => ({
+  title: 'Playlist Gen | Login',
+});
 
 export default function Login() {
   const data = useLoaderData<LoginData>();
