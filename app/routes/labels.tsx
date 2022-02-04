@@ -65,27 +65,23 @@ export const loader: LoaderFunction = async ({ request }) => {
 
   const numPages = Math.ceil(user._count.labels / pageSize);
 
-  // Calculate the track count of smart labels
+  // Calculate the track counts
   const cacheToken = new CacheToken();
-  for (const label of user.labels) {
-    if (label.smartCriteria !== null) {
-      const countTracksPromise = getCriteriaMatches(
-        userId,
-        label.smartCriteria,
-        cacheToken,
-      )
-        .then((matches) => matches.length)
-        // Suppress errors calculating the matches and default to 0
-        .catch(() => 0);
-      label._count.tracks = await countTracksPromise;
-    }
-  }
+  const labels = await Promise.all(
+    user.labels.map(async ({ _count, ...label }) => {
+      const numTracks =
+        label.smartCriteria === null
+          ? _count.tracks
+          : await getCriteriaMatches(userId, label.smartCriteria, cacheToken)
+              .then((matches) => matches.length)
+              // Suppress errors calculating the matches and default to 0
+              .catch(() => 0);
+      return { ...label, numTracks };
+    }),
+  );
 
   return json<LabelsData>({
-    labels: user.labels.map(({ _count, ...label }) => ({
-      ...label,
-      numTracks: _count.tracks,
-    })),
+    labels,
     pageCount: Math.max(numPages, 1),
     pageIndex: page,
   });
