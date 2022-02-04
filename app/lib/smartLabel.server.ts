@@ -18,23 +18,15 @@ type FilterData = {
 
 // Use a WeakMap so that as soon as the cache token that the caller is holding
 // onto goes out of scope, the cache item is removed as well
-const cache = new WeakMap<CacheToken, FilterData>();
+// Store promises to the filter data to support concurrent requests to getCriteriaMatches.
+// If multiple requests to getCriteriaMatches with a new cache token are started
+// simultaneously, none of will find data in the cache because it is asynchronously
+// loaded. To resolve that, synchronously store a promise to the result of the
+// first request and the subsequent requests can lookup and await that same promise.
+const cache = new WeakMap<CacheToken, Promise<FilterData>>();
 
-// Load and return the data that is needed to execute a smart criteria filter
-// When the optional cache token is provided, the index is only built the first
-// that the cache token is provided. It is intended that the caller will create
-// a cache token then use the same cache token for subsequent calls to
-// getFilterData within the same request.
-export async function getFilterData(
-  userId: number,
-  cacheToken?: CacheToken,
-): Promise<FilterData> {
-  // Attempt to lookup the data from the cache
-  const existingIndex = cacheToken && cache.get(cacheToken);
-  if (existingIndex) {
-    return existingIndex;
-  }
-
+// Load the filter data from the database, uncached
+async function loadFilterData(userId: number): Promise<FilterData> {
   // Query the database and build the index
   const tracks = await prisma.track.findMany({
     where: { userId },
@@ -49,11 +41,30 @@ export async function getFilterData(
   const indexedLabels = new Map<number, Set<number>>(
     labels.map((label) => [label.id, new Set(map(label.tracks, 'id'))]),
   );
+  return { tracks, indexedLabels };
+}
+
+// Load and return the data that is needed to execute a smart criteria filter
+// When the optional cache token is provided, the index is only built the first
+// that the cache token is provided. It is intended that the caller will create
+// a cache token then use the same cache token for subsequent calls to
+// getFilterData within the same request.
+async function getFilterData(
+  userId: number,
+  cacheToken?: CacheToken,
+): Promise<FilterData> {
+  // Attempt to lookup the data from the cache
+  const existingIndex = cacheToken && cache.get(cacheToken);
+  if (existingIndex) {
+    return existingIndex;
+  }
+
+  const dataPromise = loadFilterData(userId);
   if (cacheToken) {
     // Cache the data under the provided cache token
-    cache.set(cacheToken, { tracks, indexedLabels });
+    cache.set(cacheToken, dataPromise);
   }
-  return { tracks, indexedLabels };
+  return dataPromise;
 }
 
 // Return an array of the tracks that match a given criteria string
