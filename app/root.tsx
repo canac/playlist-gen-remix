@@ -212,7 +212,11 @@ function Layout({ children }: { children: React.ReactNode }) {
     <div className="remix-app">
       <AppBar position="sticky">
         <Toolbar>
-          <Typography variant="h4" component="h1" sx={{ marginRight: '1em' }}>
+          <Typography
+            variant="h4"
+            component="h1"
+            sx={{ marginRight: '1em', flexGrow: { xs: 1, md: 0 } }}
+          >
             Playlist Generator
           </Typography>
           <Box sx={{ flexGrow: 1, display: { xs: 'none', md: 'flex' } }}>
