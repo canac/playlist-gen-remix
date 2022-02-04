@@ -177,36 +177,41 @@ export async function syncPlaylists(user: User): Promise<void> {
   const newLabels = await prisma.label.findMany({
     where: { userId: user.id, playlist: null },
   });
-  for (const label of newLabels) {
-    // Create a new Spotify playlist for the label
-    const newPlaylist = {
-      name: `${label.name} [generated]`,
-      description: `Tracks labeled "${label.name}" by playlist-gen`,
-      public: false,
-    };
-    const { id: spotifyId } = CreatePlaylistResponse.parse(
-      await spotifyFetch(
-        user,
-        new Request(
-          `https://api.spotify.com/v1/users/${user.spotifyId}/playlists`,
-          {
-            method: 'POST',
-            body: JSON.stringify(newPlaylist),
-            headers: {
-              'Content-Type': 'application/json',
-            },
-          },
-        ),
-      ),
-    );
 
-    // Save the playlist to the database
-    await prisma.playlist.create({
-      data: { userId: user.id, spotifyId, labelId: label.id },
-    });
+  // Create the new Spotify playlists in parallel
+  const playlists = await Promise.all(
+    newLabels.map(async (label) => {
+      // Create a new Spotify playlist for the label
+      const newPlaylist = {
+        name: `${label.name} [generated]`,
+        description: `Tracks labeled "${label.name}" by playlist-gen`,
+        public: false,
+      };
+      const { id: spotifyId } = CreatePlaylistResponse.parse(
+        await spotifyFetch(
+          user,
+          new Request(
+            `https://api.spotify.com/v1/users/${user.spotifyId}/playlists`,
+            {
+              method: 'POST',
+              body: JSON.stringify(newPlaylist),
+              headers: {
+                'Content-Type': 'application/json',
+              },
+            },
+          ),
+        ),
+      );
+      return { userId: user.id, spotifyId, labelId: label.id };
+    }),
+  );
+
+  // Save the playlists to the database
+  if (playlists.length > 0) {
+    await prisma.playlist.createMany({ data: playlists });
   }
 
-  const cacheToken = new CacheToken();
+  // Load the tracks in preparation for pushing them into the playlists
   const dbPlaylists = await prisma.playlist.findMany({
     where: { userId: user.id },
     include: {
@@ -217,70 +222,77 @@ export async function syncPlaylists(user: User): Promise<void> {
       },
     },
   });
-  for (const playlist of dbPlaylists) {
-    const dummyTrackSpotifyId = '41MCdlvXOl62B7Kv86Bb1v';
 
-    let { tracks } = playlist.label;
+  // Push the playlists to Spotify in parallel
+  const cacheToken = new CacheToken();
+  await Promise.all(
+    dbPlaylists.map(async (playlist): Promise<void> => {
+      const dummyTrackSpotifyId = '41MCdlvXOl62B7Kv86Bb1v';
 
-    // Override the tracks for smart labels
-    const { smartCriteria } = playlist.label;
-    if (smartCriteria !== null) {
-      const getMatchesPromise = getCriteriaMatches(
-        user.id,
-        smartCriteria,
-        cacheToken,
-      ).catch((err) => {
-        log.error(err);
-        return [];
-      });
-      tracks = await getMatchesPromise;
-    }
+      let { tracks } = playlist.label;
 
-    // Replace the tracks in the Spotify playlist with the new tracks
-    // If the playlist needs to be cleared without any new tracks put into it, it is more
-    // efficient to replace the entire playlist with a single song and then remove it than
-    // to query the playlist for all of it's ids, possibly in multiple batches, and then
-    // remove all of those ids, possibly in multiple batches
-    const trackSpotifyIds = map(tracks, 'spotifyId');
-    for (const [index, spotifyIds] of chunk(
-      trackSpotifyIds.length > 0 ? trackSpotifyIds : [dummyTrackSpotifyId],
-      // Send 50 tracks at a time
-      50,
-    ).entries()) {
-      const uris = spotifyIds.map((spotifyId) => `spotify:track:${spotifyId}`);
-      await spotifyFetch(
-        user,
-        new Request(
-          `https://api.spotify.com/v1/playlists/${
-            playlist.spotifyId
-          }/tracks?uris=${encodeURIComponent(uris.join(','))}`,
-          {
-            // During the first chunk, send PUT request to replace all previous tracks with the new chunk of tracks
-            // For subsequent chunks, send POST request to append the new chunk of tracks to the existing tracks
-            // to avoid overwriting the chunks that were just uploaded
-            method: index === 0 ? 'PUT' : 'POST',
-          },
-        ),
-      );
-    }
+      // Override the tracks for smart labels
+      const { smartCriteria } = playlist.label;
+      if (smartCriteria !== null) {
+        tracks = await getCriteriaMatches(
+          user.id,
+          smartCriteria,
+          cacheToken,
+        ).catch((err) => {
+          log.error(err);
+          return [];
+        });
+      }
 
-    // If the playlist needs to be emptied, remove the dummy track that we added to it
-    if (playlist.label.tracks.length === 0) {
-      await spotifyFetch(
-        user,
-        new Request(
-          `https://api.spotify.com/v1/playlists/${playlist.spotifyId}/tracks`,
-          {
-            method: 'DELETE',
-            body: JSON.stringify({
-              tracks: [{ uri: `spotify:track:${dummyTrackSpotifyId}` }],
-            }),
-            headers: {
-              'Content-Type': 'application/json',
+      // Replace the tracks in the Spotify playlist with the new tracks
+      // If the playlist needs to be cleared without any new tracks put into it, it is more
+      // efficient to replace the entire playlist with a single song and then remove it than
+      // to query the playlist for all of it's ids, possibly in multiple batches, and then
+      // remove all of those ids, possibly in multiple batches
+      const trackSpotifyIds = map(tracks, 'spotifyId');
+      for (const [index, spotifyIds] of chunk(
+        trackSpotifyIds.length > 0 ? trackSpotifyIds : [dummyTrackSpotifyId],
+        // Send 50 tracks at a time
+        50,
+      ).entries()) {
+        const uris = spotifyIds.map(
+          (spotifyId) => `spotify:track:${spotifyId}`,
+        );
+        // eslint-disable-next-line no-await-in-loop
+        await spotifyFetch(
+          user,
+          new Request(
+            `https://api.spotify.com/v1/playlists/${
+              playlist.spotifyId
+            }/tracks?uris=${encodeURIComponent(uris.join(','))}`,
+            {
+              // During the first chunk, send PUT request to replace all previous tracks with the new chunk of tracks
+              // For subsequent chunks, send POST request to append the new chunk of tracks to the existing tracks
+              // to avoid overwriting the chunks that were just uploaded
+              method: index === 0 ? 'PUT' : 'POST',
             },
-          },
-        ),
-      );
-    }
-  }
+          ),
+        );
+      }
+
+      // If the playlist needs to be emptied, remove the dummy track that we added to it
+      if (playlist.label.tracks.length === 0) {
+        await spotifyFetch(
+          user,
+          new Request(
+            `https://api.spotify.com/v1/playlists/${playlist.spotifyId}/tracks`,
+            {
+              method: 'DELETE',
+              body: JSON.stringify({
+                tracks: [{ uri: `spotify:track:${dummyTrackSpotifyId}` }],
+              }),
+              headers: {
+                'Content-Type': 'application/json',
+              },
+            },
+          ),
+        );
+      }
+    }),
+  );
 }
