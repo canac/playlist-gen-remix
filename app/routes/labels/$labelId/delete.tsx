@@ -21,7 +21,7 @@ import { ensureAuthenticated } from '~/lib/middleware.server';
 import { prisma } from '~/lib/prisma.server';
 
 type LabelData = {
-  label: Pick<Label, 'id' | 'name'>;
+  label: Pick<Label, 'name'>;
 };
 
 /*
@@ -65,7 +65,7 @@ export const loader: LoaderFunction = async ({ request, params }) => {
       id: extractIntFromParam(params, 'labelId'),
       userId,
     },
-    select: { id: true, name: true },
+    select: { name: true },
   });
   if (!label) {
     throw new Response('Label could not be found', { status: 404 });
@@ -84,7 +84,6 @@ export default function DeleteLabelRoute() {
   return (
     <Box
       component={Form}
-      action={`/labels/${label.id}/delete`}
       method="post"
       sx={{
         width: '25em',
