@@ -1,26 +1,44 @@
-import { Box, Button, TextField, Typography } from '@mui/material';
+import { Box, Button, Typography } from '@mui/material';
 import { Label } from '@prisma/client';
+import { withZod } from '@remix-validated-form/with-zod';
 import {
   ActionFunction,
-  Form,
   LoaderFunction,
   MetaFunction,
   json,
+  useActionData,
   useLoaderData,
 } from 'remix';
-import SmartCriteriaInput from '~/components/SmartCriteriaInput';
 import {
-  extractIntFromParam,
-  extractStringFromFormData,
-} from '~/lib/helpers.server';
+  GenericObject,
+  ValidatedForm,
+  ValidatorError,
+} from 'remix-validated-form';
+import { z } from 'zod';
+import SmartCriteriaInput from '~/components/SmartCriteriaInput';
+import ValidatedTextField from '~/components/ValidatedTextField';
+import { extractIntFromParam } from '~/lib/helpers.server';
 import { ensureAuthenticated } from '~/lib/middleware.server';
 import { prisma } from '~/lib/prisma.server';
 import { validateSmartCriteria } from '~/lib/smartLabel.server';
-import { attemptOr } from '~/lib/util';
 
 type LabelData = {
   label: Label;
 };
+
+const validator = withZod(
+  z.object({
+    name: z.string().nonempty('Label name is required'),
+    smartCriteria: z
+      .string()
+      .nonempty('Smart criteria must not be empty')
+      .optional(),
+  }),
+);
+
+type ActionData =
+  | { success: true }
+  | { success: false; error: ValidatorError; submittedData: GenericObject };
 
 /*
  * Edit a label.
@@ -32,25 +50,33 @@ type LabelData = {
  *   name: string           The new name of the label
  *   smartCriteria: string? The new smart criteria for the label
  */
-export const action: ActionFunction = async ({ request, params }) => {
+export const action: ActionFunction = async ({
+  request,
+  params,
+}): Promise<ActionData> => {
   const userId = await ensureAuthenticated(request);
 
   // Extract the labelId from the URL
   const labelId = extractIntFromParam(params, 'labelId');
 
   // Extract the other fields from the form
-  const formData = await request.formData();
-  const name = extractStringFromFormData(formData, 'name');
-  const smartCriteria = attemptOr(
-    () => extractStringFromFormData(formData, 'smartCriteria'),
-    null,
-  );
+  const form = await request.formData();
+  const result = await validator.validate(form);
+  const { submittedData } = result;
+  if (result.error) {
+    return { success: false, error: result.error, submittedData };
+  }
+  const { name, smartCriteria } = result.data;
 
   if (
-    smartCriteria !== null &&
+    typeof smartCriteria === 'string' &&
     !(await validateSmartCriteria(userId, smartCriteria))
   ) {
-    return new Response('Invalid smart criteria', { status: 500 });
+    return {
+      success: false,
+      error: { fieldErrors: { smartCriteria: 'Invalid smart criteria' } },
+      submittedData,
+    };
   }
 
   // Update the label
@@ -70,7 +96,7 @@ export const action: ActionFunction = async ({ request, params }) => {
     });
   }
 
-  return json({ success: true });
+  return { success: true };
 };
 
 export const meta: MetaFunction = ({ data }: { data: LabelData }) => ({
@@ -99,13 +125,19 @@ export const loader: LoaderFunction = async ({ request, params }) => {
 
 export default function EditLabelRoute() {
   const { label } = useLoaderData<LabelData>();
+  const actionData = useActionData<ActionData>();
+  const fieldErrors =
+    actionData?.success === false ? actionData.error.fieldErrors : undefined;
 
   return (
     <Box
-      component={Form}
-      action={`/labels/${label.id}/edit`}
+      component={ValidatedForm}
+      validator={validator}
       method="post"
       key={label.id}
+      defaultValues={
+        actionData?.success === false ? actionData.submittedData : label
+      }
       sx={{
         width: '25em',
         display: 'flex',
@@ -116,21 +148,23 @@ export default function EditLabelRoute() {
       <Typography variant="h3" component="h2">
         Edit label
       </Typography>
-      <TextField
+      <ValidatedTextField
         required
         name="name"
         label="Label name"
         variant="outlined"
-        defaultValue={label.name}
+        fieldErrors={fieldErrors}
       />
       {label.smartCriteria === null ? null : (
-        <SmartCriteriaInput
-          required
-          name="smartCriteria"
-          label="Smart criteria"
-          variant="outlined"
-          defaultValue={label.smartCriteria}
-        />
+        <>
+          <SmartCriteriaInput
+            required
+            name="smartCriteria"
+            label="Smart criteria"
+            variant="outlined"
+            fieldErrors={fieldErrors}
+          />
+        </>
       )}
       <Button type="submit">Save</Button>
     </Box>

@@ -22,6 +22,7 @@
     "@prisma/client": "^3.8.1",
     "@remix-run/react": "^1.1.1",
     "@remix-run/serve": "^1.1.1",
+    "@remix-validated-form/with-zod": "^2.0.1",
     "@tinyhttp/cookie-signature": "^1.3.0",
     "dotenv": "^12.0.4",
     "lodash": "^4.17.21",
@@ -34,6 +35,7 @@
     "react-router": "^6.2.1",
     "react-toastify": "^8.1.1",
     "remix": "^1.1.1",
+    "remix-validated-form": "^4.0.2",
     "tiny-invariant": "^1.2.0",
     "zod": "^3.11.6"
   },

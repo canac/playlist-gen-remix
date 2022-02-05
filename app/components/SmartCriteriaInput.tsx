@@ -1,9 +1,14 @@
-import { TextField, TextFieldProps, Typography } from '@mui/material';
+import { Typography } from '@mui/material';
 import { debounce } from 'lodash';
 import { useEffect } from 'react';
 import { useFetcher } from 'remix';
+import ValidatedTextField, {
+  ValidatedTextFieldProps,
+} from '~/components/ValidatedTextField';
 
-export default function SmartCriteriaInput(props: TextFieldProps): JSX.Element {
+export default function SmartCriteriaInput(
+  props: ValidatedTextFieldProps,
+): JSX.Element {
   const fetcher = useFetcher<
     { success: true; matchCount: number } | { success: false; error: Error }
   >();
@@ -27,7 +32,7 @@ export default function SmartCriteriaInput(props: TextFieldProps): JSX.Element {
 
   return (
     <>
-      <TextField
+      <ValidatedTextField
         {...props}
         onChange={debounce(
           (event: React.ChangeEvent<HTMLInputElement>) =>
