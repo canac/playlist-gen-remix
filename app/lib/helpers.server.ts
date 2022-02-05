@@ -33,12 +33,18 @@ export function extractIntFromParam(
   return validateInt(params[paramName], paramName);
 }
 
+// Workaround for https://github.com/remix-run/remix/issues/1185
+// FormData.get() returns null when the value is an empty string
+function formDataGet(form: FormData, name: string): FormDataEntryValue | null {
+  return form.has(name) ? form.get(name) ?? '' : null;
+}
+
 // Extract the param with the specified name from the provided form data, expecting it to be a string
 export function extractStringFromFormData(
   form: FormData,
   paramName: string,
 ): string {
-  return validateString(form.get(paramName), paramName);
+  return validateString(formDataGet(form, paramName), paramName);
 }
 
 // Extract the param with the specified name from the provided form data, expecting it to be an integer
@@ -46,7 +52,7 @@ export function extractIntFromFormData(
   form: FormData,
   paramName: string,
 ): number {
-  return validateInt(form.get(paramName), paramName);
+  return validateInt(formDataGet(form, paramName), paramName);
 }
 
 // Extract the param with the specified name from the provided form data, expecting it to be a string
