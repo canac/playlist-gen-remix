@@ -102,7 +102,10 @@ export default function DeleteLabelRoute() {
             onChange={(event) => setConfirmDelete(event.target.checked)}
           />
         }
-        label="Are you sure you want to delete the label? This action cannot be undone."
+        label={
+          `Are you sure you want to delete the label "${label.name}"? ` +
+          `This action cannot be undone.`
+        }
       />
       <Button type="submit" color="error" disabled={!confirmDelete}>
         Delete
