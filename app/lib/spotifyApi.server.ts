@@ -217,7 +217,10 @@ export async function syncPlaylists(user: User): Promise<void> {
     include: {
       label: {
         include: {
-          tracks: { select: { spotifyId: true } },
+          tracks: {
+            select: { spotifyId: true },
+            orderBy: [{ dateAdded: 'desc' }],
+          },
         },
       },
     },
