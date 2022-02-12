@@ -1,5 +1,5 @@
 import { Track } from '@prisma/client';
-import { map } from 'lodash';
+import { difference, map } from 'lodash';
 import { Grammar, Parser } from 'nearley';
 import CacheToken from '~/lib/cacheToken';
 import grammar from '~/lib/labelGrammar.server';
@@ -11,6 +11,8 @@ const parser = new Parser(Grammar.fromCompiled(grammar));
 type FilterData = {
   // All of the user's tracks
   tracks: Track[];
+  // All of the tracks without any labels indexed by id
+  unlabeledTracks: Set<number>;
   // An index of the user's labels and tracks by id
   // The key is the label id, and the value is a set of the label's track ids
   indexedLabels: Map<number, Set<number>>;
@@ -40,10 +42,19 @@ async function loadFilterData(userId: number): Promise<FilterData> {
       tracks: { select: { id: true } },
     },
   });
+  const unlabeledTracks = new Set<number>(
+    difference(
+      map(tracks, 'id'),
+      map(
+        labels.flatMap((label) => label.tracks),
+        'id',
+      ),
+    ),
+  );
   const indexedLabels = new Map<number, Set<number>>(
     labels.map((label) => [label.id, new Set(map(label.tracks, 'id'))]),
   );
-  return { tracks, indexedLabels };
+  return { tracks, unlabeledTracks, indexedLabels };
 }
 
 // Load and return the data that is needed to execute a smart criteria filter
@@ -75,7 +86,7 @@ export async function getCriteriaMatches(
   criteria: string,
   cacheToken?: CacheToken,
 ): Promise<Track[]> {
-  const { tracks, indexedLabels } = await getFilterData(userId, cacheToken);
+  const { tracks, unlabeledTracks, indexedLabels } = await getFilterData(userId, cacheToken);
 
   // Parsing the smart criteria produces an evaluator function that when provided
   // a way to look up the values for value identifiers determines whether a track
@@ -94,6 +105,10 @@ export async function getCriteriaMatches(
       }
       if (value === 'clean') {
         return !track.explicit;
+      }
+
+      if (value === 'unlabeled') {
+        return unlabeledTracks.has(track.id)
       }
 
       const yearMatches = /^year:(?<year>\d+)$/.exec(value);
