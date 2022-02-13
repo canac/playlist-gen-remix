@@ -6,6 +6,7 @@ import {
   Typography,
 } from '@mui/material';
 import { Label } from '@prisma/client';
+import { withZod } from '@remix-validated-form/with-zod';
 import { useState } from 'react';
 import {
   ActionFunction,
@@ -16,13 +17,29 @@ import {
   redirect,
   useLoaderData,
 } from 'remix';
+import { z } from 'zod';
+import { zfd } from 'zod-form-data';
 import { extractIntFromParam } from '~/lib/helpers.server';
 import { ensureAuthenticated } from '~/lib/middleware.server';
 import { prisma } from '~/lib/prisma.server';
+import {
+  formActionResponseSchema,
+  validatedFormAction,
+} from '~/lib/validatedAction';
 
 type LabelData = {
   label: Pick<Label, 'name'>;
 };
+
+const paramsSchema = zfd.formData({
+  labelId: zfd.numeric(z.number().min(0)),
+});
+
+const formSchema = withZod(z.object({}));
+
+const responseSchema = z.null();
+
+export const outputSchema = formActionResponseSchema(responseSchema);
 
 /*
  * Delete a label.
@@ -30,26 +47,31 @@ type LabelData = {
  * URL parameters:
  *   labelId: number  The id of the label to delete
  */
-export const action: ActionFunction = async ({ request, params }) => {
-  const userId = await ensureAuthenticated(request);
+export const action: ActionFunction = async (actionArgs) =>
+  validatedFormAction({
+    actionArgs,
+    paramsSchema,
+    formSchema,
+    responseSchema,
+    async action({ request, data: { labelId } }) {
+      const userId = await ensureAuthenticated(request);
 
-  const labelId = extractIntFromParam(params, 'labelId');
+      // Delete the label
+      const { count } = await prisma.label.deleteMany({
+        where: { id: labelId, userId },
+      });
+      if (count === 0) {
+        // The delete failed because no labels were found
+        // Either the id was invalid or the label isn't owned by the user. Even if the
+        // label exists, do not leak that information to the user if they don't own the label.
+        throw new Response('Error deleting non-existent label', {
+          status: 404,
+        });
+      }
 
-  // Delete the label
-  const { count } = await prisma.label.deleteMany({
-    where: { id: labelId, userId },
+      return redirect(`/labels`);
+    },
   });
-  if (count === 0) {
-    // The delete failed because no labels were found
-    // Either the id was invalid or the label isn't owned by the user. Even if the
-    // label exists, do not leak that information to the user if they don't own the label.
-    throw new Response('Error deleting non-existent label', {
-      status: 404,
-    });
-  }
-
-  return redirect(`/labels`);
-};
 
 export const meta: MetaFunction = ({ data }: { data: LabelData }) => ({
   title: `Playlist Gen | Delete Label "${data.label.name}"`,

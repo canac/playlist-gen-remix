@@ -7,30 +7,29 @@ import {
 } from '@mui/material';
 import { withZod } from '@remix-validated-form/with-zod';
 import { useState } from 'react';
-import {
-  ActionFunction,
-  LoaderFunction,
-  MetaFunction,
-  redirect,
-  useActionData,
-} from 'remix';
-import {
-  GenericObject,
-  ValidatedForm,
-  ValidatorError,
-} from 'remix-validated-form';
+import { ActionFunction, LoaderFunction, MetaFunction, redirect } from 'remix';
+import { ValidatedForm } from 'remix-validated-form';
 import { z } from 'zod';
+import { zfd } from 'zod-form-data';
 import SmartCriteriaInput from '~/components/SmartCriteriaInput';
 import ValidatedTextField from '~/components/ValidatedTextField';
 import { ensureAuthenticated } from '~/lib/middleware.server';
 import { prisma } from '~/lib/prisma.server';
 import { validateSmartCriteria } from '~/lib/smartLabel.server';
+import {
+  ValidationError,
+  formActionResponseSchema,
+  useValidatedActionData,
+  validatedFormAction,
+} from '~/lib/validatedAction';
 
 export const meta: MetaFunction = () => ({
   title: 'Playlist Gen | Create label',
 });
 
-const validator = withZod(
+const paramsSchema = zfd.formData({});
+
+const formSchema = withZod(
   z.object({
     name: z.string().nonempty('Label name is required'),
     smartCriteria: z
@@ -40,55 +39,41 @@ const validator = withZod(
   }),
 );
 
-type ActionData =
-  | { success: true }
-  | { success: false; error: ValidatorError; submittedData: GenericObject };
+const responseSchema = z.null();
 
-/*
- * Create a new label.
- *
- * Parameters:
- *   name: string           The new name of the label
- *   smartCriteria: string? The new smart criteria for the label
- */
-export const action: ActionFunction = async ({
-  request,
-}): Promise<ActionData | Response> => {
-  const userId = await ensureAuthenticated(request);
+export const outputSchema = formActionResponseSchema(responseSchema);
 
-  // Extract the fields from the form
-  const form = await request.formData();
-  const result = await validator.validate(form);
-  const { submittedData } = result;
-  if (result.error) {
-    return { success: false, error: result.error, submittedData };
-  }
-  const { name, smartCriteria } = result.data;
+// Create a new label
+export const action: ActionFunction = async (actionArgs) =>
+  validatedFormAction({
+    actionArgs,
+    paramsSchema,
+    formSchema,
+    responseSchema,
+    async action({ request, data: { name, smartCriteria } }) {
+      const userId = await ensureAuthenticated(request);
 
-  if (
-    typeof smartCriteria === 'string' &&
-    !(await validateSmartCriteria(userId, smartCriteria))
-  ) {
-    return {
-      success: false,
-      error: { fieldErrors: { smartCriteria: 'Invalid smart criteria' } },
-      submittedData,
-    };
-  }
+      if (
+        typeof smartCriteria === 'string' &&
+        !(await validateSmartCriteria(userId, smartCriteria))
+      ) {
+        throw new ValidationError('smartCriteria', 'Invalid smart criteria');
+      }
 
-  // Create the label
-  const label = await prisma.label.create({
-    data: {
-      userId,
-      name,
-      smartCriteria,
+      // Create the label
+      const label = await prisma.label.create({
+        data: {
+          userId,
+          name,
+          smartCriteria,
+        },
+        select: { id: true },
+      });
+
+      // Redirect to the newly-created label
+      return redirect(`/labels/${label.id}`);
     },
-    select: { id: true },
   });
-
-  // Redirect to the newly-created label
-  return redirect(`/labels/${label.id}`);
-};
 
 export const loader: LoaderFunction = async ({ request }) => {
   // Get the authenticated state from the session
@@ -97,19 +82,23 @@ export const loader: LoaderFunction = async ({ request }) => {
 };
 
 export default function NewLabelRoute() {
-  const actionData = useActionData<ActionData>();
+  const actionData = useValidatedActionData(outputSchema);
   const fieldErrors =
-    actionData?.success === false ? actionData.error.fieldErrors : undefined;
+    actionData && 'error' in actionData
+      ? actionData.error.fieldErrors
+      : undefined;
 
   const [smartLabel, setSmartLabel] = useState<boolean>(false);
 
   return (
     <Box
       component={ValidatedForm}
-      validator={validator}
+      validator={formSchema}
       method="post"
       defaultValues={
-        actionData?.success === false ? actionData.submittedData : undefined
+        actionData && 'error' in actionData
+          ? actionData.submittedData
+          : undefined
       }
       sx={{
         display: 'flex',

@@ -6,27 +6,33 @@ import {
   LoaderFunction,
   MetaFunction,
   json,
-  useActionData,
   useLoaderData,
 } from 'remix';
-import {
-  GenericObject,
-  ValidatedForm,
-  ValidatorError,
-} from 'remix-validated-form';
+import { ValidatedForm } from 'remix-validated-form';
 import { z } from 'zod';
+import { zfd } from 'zod-form-data';
 import SmartCriteriaInput from '~/components/SmartCriteriaInput';
 import ValidatedTextField from '~/components/ValidatedTextField';
 import { extractIntFromParam } from '~/lib/helpers.server';
 import { ensureAuthenticated } from '~/lib/middleware.server';
 import { prisma } from '~/lib/prisma.server';
 import { validateSmartCriteria } from '~/lib/smartLabel.server';
+import {
+  ValidationError,
+  formActionResponseSchema,
+  useValidatedActionData,
+  validatedFormAction,
+} from '~/lib/validatedAction';
 
 type LabelData = {
   label: Label;
 };
 
-const validator = withZod(
+const paramsSchema = zfd.formData({
+  labelId: zfd.numeric(z.number().min(0)),
+});
+
+const formSchema = withZod(
   z.object({
     name: z.string().nonempty('Label name is required'),
     smartCriteria: z
@@ -36,68 +42,47 @@ const validator = withZod(
   }),
 );
 
-type ActionData =
-  | { success: true }
-  | { success: false; error: ValidatorError; submittedData: GenericObject };
+const responseSchema = z.null();
 
-/*
- * Edit a label.
- *
- * URL parameters:
- *   labelId: number        The id of the label to delete
- *
- * Form parameters:
- *   name: string           The new name of the label
- *   smartCriteria: string? The new smart criteria for the label
- */
-export const action: ActionFunction = async ({
-  request,
-  params,
-}): Promise<ActionData> => {
-  const userId = await ensureAuthenticated(request);
+export const outputSchema = formActionResponseSchema(responseSchema);
 
-  // Extract the labelId from the URL
-  const labelId = extractIntFromParam(params, 'labelId');
+// Edit a label
+export const action: ActionFunction = async (actionArgs) =>
+  validatedFormAction({
+    actionArgs,
+    formSchema,
+    paramsSchema,
+    responseSchema,
+    async action({ request, data: { labelId, name, smartCriteria } }) {
+      const userId = await ensureAuthenticated(request);
 
-  // Extract the other fields from the form
-  const form = await request.formData();
-  const result = await validator.validate(form);
-  const { submittedData } = result;
-  if (result.error) {
-    return { success: false, error: result.error, submittedData };
-  }
-  const { name, smartCriteria } = result.data;
+      if (
+        typeof smartCriteria === 'string' &&
+        !(await validateSmartCriteria(userId, smartCriteria))
+      ) {
+        throw new ValidationError('smartCriteria', 'Invalid smart criteria');
+      }
 
-  if (
-    typeof smartCriteria === 'string' &&
-    !(await validateSmartCriteria(userId, smartCriteria))
-  ) {
-    return {
-      success: false,
-      error: { fieldErrors: { smartCriteria: 'Invalid smart criteria' } },
-      submittedData,
-    };
-  }
+      // Update the label
+      const { count } = await prisma.label.updateMany({
+        where: { id: labelId, userId },
+        data: {
+          name,
+          ...(smartCriteria && { smartCriteria }),
+        },
+      });
+      if (count === 0) {
+        // The update failed because no labels were found
+        // Either the id was invalid or the label isn't owned by the user. Even if the
+        // label exists, do not leak that information to the user if they don't own the label.
+        throw new Response('Error updating non-existent label', {
+          status: 404,
+        });
+      }
 
-  // Update the label
-  const { count } = await prisma.label.updateMany({
-    where: { id: labelId, userId },
-    data: {
-      name,
-      ...(smartCriteria && { smartCriteria }),
+      return null;
     },
   });
-  if (count === 0) {
-    // The update failed because no labels were found
-    // Either the id was invalid or the label isn't owned by the user. Even if the
-    // label exists, do not leak that information to the user if they don't own the label.
-    throw new Response('Error updating non-existent label', {
-      status: 404,
-    });
-  }
-
-  return { success: true };
-};
 
 export const meta: MetaFunction = ({ data }: { data: LabelData }) => ({
   title: `Playlist Gen | Edit Label "${data.label.name}"`,
@@ -125,18 +110,20 @@ export const loader: LoaderFunction = async ({ request, params }) => {
 
 export default function EditLabelRoute() {
   const { label } = useLoaderData<LabelData>();
-  const actionData = useActionData<ActionData>();
+  const actionData = useValidatedActionData(outputSchema);
   const fieldErrors =
-    actionData?.success === false ? actionData.error.fieldErrors : undefined;
+    actionData && 'error' in actionData
+      ? actionData.error.fieldErrors
+      : undefined;
 
   return (
     <Box
       component={ValidatedForm}
-      validator={validator}
+      validator={formSchema}
       method="post"
       key={label.id}
       defaultValues={
-        actionData?.success === false ? actionData.submittedData : label
+        actionData && 'error' in actionData ? actionData.submittedData : label
       }
       sx={{
         width: '25em',

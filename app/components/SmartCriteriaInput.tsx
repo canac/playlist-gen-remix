@@ -1,17 +1,16 @@
 import { Typography } from '@mui/material';
 import { debounce } from 'lodash';
 import { useEffect } from 'react';
-import { useFetcher } from 'remix';
 import ValidatedTextField, {
   ValidatedTextFieldProps,
 } from '~/components/ValidatedTextField';
+import { useValidatedFetcher } from '~/lib/validatedAction';
+import { outputSchema } from '~/routes/api/smartLabelMatches';
 
 export default function SmartCriteriaInput(
   props: ValidatedTextFieldProps,
 ): JSX.Element {
-  const fetcher = useFetcher<
-    { success: true; matchCount: number } | { success: false; error: Error }
-  >();
+  const fetcher = useValidatedFetcher(outputSchema);
 
   function loadCriteriaMatches(smartCriteria: string) {
     const form = new URLSearchParams();
@@ -40,12 +39,12 @@ export default function SmartCriteriaInput(
           200,
         )}
       />
-      {fetcher.data && !fetcher.data.success && (
+      {fetcher.data && 'error' in fetcher.data && (
         <Typography color="error">Invalid smart criteria</Typography>
       )}
-      {fetcher.data && fetcher.data.success && (
+      {fetcher.data && 'data' in fetcher.data && (
         <Typography>
-          Smart criteria matches <strong>{fetcher.data.matchCount}</strong>{' '}
+          Smart criteria matches <strong>{fetcher.data.data.matchCount}</strong>{' '}
           labels
         </Typography>
       )}
