@@ -1,11 +1,11 @@
 import { createCookieSessionStorage } from 'remix';
-import { extractStringFromEnvVar } from '~/lib/helpers.server';
+import { env } from '~/lib/env.server';
 
 const sessionStorage = createCookieSessionStorage({
   cookie: {
     name: '__session',
     path: '/',
-    secrets: [extractStringFromEnvVar('COOKIE_SECRET')],
+    secrets: [env.COOKIE_SECRET],
     sameSite: true,
   },
 });

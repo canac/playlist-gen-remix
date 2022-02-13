@@ -2,10 +2,8 @@ import { Box, Typography } from '@mui/material';
 import { useEffect } from 'react';
 import { Link, LoaderFunction, json, useLoaderData } from 'remix';
 import { z } from 'zod';
-import {
-  extractStringFromEnvVar,
-  extractStringFromSearchParams,
-} from '~/lib/helpers.server';
+import { env } from '~/lib/env.server';
+import { extractStringFromSearchParams } from '~/lib/helpers.server';
 import { prisma } from '~/lib/prisma.server';
 import { sessionStorage } from '~/lib/sessions.server';
 
@@ -36,10 +34,7 @@ export const loader: LoaderFunction = async ({ request }) => {
   const { searchParams } = new URL(request.url);
   const code = extractStringFromSearchParams(searchParams, 'code');
   const state = extractStringFromSearchParams(searchParams, 'state');
-  const redirectUri = await unsign(
-    state,
-    extractStringFromEnvVar('COOKIE_SECRET'),
-  );
+  const redirectUri = await unsign(state, env.COOKIE_SECRET);
   if (redirectUri === false) {
     throw new Response('Invalid OAuth state', { status: 500 });
   }
@@ -48,13 +43,8 @@ export const loader: LoaderFunction = async ({ request }) => {
   const body = new URLSearchParams();
   body.append('grant_type', 'authorization_code');
   body.append('code', code);
-  body.append(
-    'redirect_uri',
-    `${extractStringFromEnvVar('DOMAIN')}/auth/oauth_callback`,
-  );
-  const authorization = `${extractStringFromEnvVar(
-    'SPOTIFY_CLIENT_ID',
-  )}:${extractStringFromEnvVar('SPOTIFY_CLIENT_SECRET')}`;
+  body.append('redirect_uri', `${env.DOMAIN}/auth/oauth_callback`);
+  const authorization = `${env.SPOTIFY_CLIENT_ID}:${env.SPOTIFY_CLIENT_SECRET}`;
   const tokenRes = await fetch('https://accounts.spotify.com/api/token', {
     method: 'POST',
     body,

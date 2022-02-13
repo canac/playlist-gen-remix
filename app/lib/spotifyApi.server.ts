@@ -4,8 +4,8 @@ import { User } from '@prisma/client';
 import { chunk, differenceBy, map } from 'lodash';
 import log from 'loglevel';
 import { z } from 'zod';
-import { extractStringFromEnvVar } from './helpers.server';
 import CacheToken from '~/lib/cacheToken';
+import { env } from '~/lib/env.server';
 import { prisma } from '~/lib/prisma.server';
 import { getCriteriaMatches } from '~/lib/smartLabel.server';
 
@@ -22,9 +22,7 @@ async function refreshAccessToken(user: User): Promise<void> {
   const body = new URLSearchParams();
   body.append('grant_type', 'refresh_token');
   body.append('refresh_token', user.refreshToken);
-  const authorization = `${extractStringFromEnvVar(
-    'SPOTIFY_CLIENT_ID',
-  )}:${extractStringFromEnvVar('SPOTIFY_CLIENT_SECRET')}`;
+  const authorization = `${env.SPOTIFY_CLIENT_ID}:${env.SPOTIFY_CLIENT_SECRET}`;
   const tokenRes = await fetch('https://accounts.spotify.com/api/token', {
     method: 'POST',
     body,

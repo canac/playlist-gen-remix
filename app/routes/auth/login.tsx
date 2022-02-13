@@ -6,7 +6,7 @@ import {
   redirect,
   useLoaderData,
 } from 'remix';
-import { extractStringFromEnvVar } from '~/lib/helpers.server';
+import { env } from '~/lib/env.server';
 import { getUser } from '~/lib/middleware.server';
 
 type LoginData = {
@@ -21,15 +21,12 @@ export const loader: LoaderFunction = async ({ request }) => {
     return redirect(redirectUri);
   }
 
-  const state = await sign(
-    redirectUri,
-    extractStringFromEnvVar('COOKIE_SECRET'),
-  );
+  const state = await sign(redirectUri, env.COOKIE_SECRET);
   const qs = new URLSearchParams({
     response_type: 'code',
-    client_id: extractStringFromEnvVar('SPOTIFY_CLIENT_ID'),
+    client_id: env.SPOTIFY_CLIENT_ID,
     scope: 'user-library-read,playlist-read-private,playlist-modify-private',
-    redirect_uri: `${extractStringFromEnvVar('DOMAIN')}/auth/oauth_callback`,
+    redirect_uri: `${env.DOMAIN}/auth/oauth_callback`,
     state,
   });
   return json<LoginData>(
