@@ -86,7 +86,10 @@ export async function getCriteriaMatches(
   criteria: string,
   cacheToken?: CacheToken,
 ): Promise<Track[]> {
-  const { tracks, unlabeledTracks, indexedLabels } = await getFilterData(userId, cacheToken);
+  const { tracks, unlabeledTracks, indexedLabels } = await getFilterData(
+    userId,
+    cacheToken,
+  );
 
   // Parsing the smart criteria produces an evaluator function that when provided
   // a way to look up the values for value identifiers determines whether a track
@@ -108,7 +111,7 @@ export async function getCriteriaMatches(
       }
 
       if (value === 'unlabeled') {
-        return unlabeledTracks.has(track.id)
+        return unlabeledTracks.has(track.id);
       }
 
       const yearMatches = /^year:(?<year>\d+)$/.exec(value);
