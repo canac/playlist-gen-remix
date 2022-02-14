@@ -80,6 +80,14 @@ async function getFilterData(
   return dataPromise;
 }
 
+const operations = new Map<string, (left: number, right: number) => boolean>([
+  ['=', (l, r) => l === r],
+  ['<', (l, r) => l < r],
+  ['<=', (l, r) => l <= r],
+  ['>', (l, r) => l > r],
+  ['>=', (l, r) => l >= r],
+]);
+
 // Return an array of the tracks that match a given criteria string
 export async function getCriteriaMatches(
   userId: number,
@@ -114,10 +122,14 @@ export async function getCriteriaMatches(
         return unlabeledTracks.has(track.id);
       }
 
-      const yearMatches = /^year:(?<year>\d+)$/.exec(value);
+      const yearMatches = /^year(?<operation>[=<>]|<=|>=)(?<year>\d+)$/.exec(value);
       if (yearMatches?.groups) {
-        const year = parseInt(yearMatches.groups.year, 10);
-        return track.dateAdded.getFullYear() === year;
+        const { operation, year } = yearMatches.groups;
+        const comparator = operations.get(operation);
+        if (!comparator) {
+          throw new Error(`Invalid operation "${operation}"`);
+        }
+        return comparator(track.dateAdded.getFullYear(), parseInt(year, 10));
       }
 
       const labelMatches = /^label:(?<labelId>\d+)$/.exec(value);

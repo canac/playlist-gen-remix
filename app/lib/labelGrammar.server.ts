@@ -15,7 +15,7 @@ import moo from 'moo';
 
 const lexer = moo.compile({
   ws: / +/,
-  value: /clean|explicit|unlabeled|year:\d{4}|label:\d+/,
+  value: /clean|explicit|unlabeled|year(?:[=<>]|<=|>=)\d{4}|label:\d+/,
   not: '!',
   and: '&&',
   or: '||',
