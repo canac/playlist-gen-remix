@@ -12,7 +12,7 @@ import {
 } from '@mui/material';
 import { Label } from '@prisma/client';
 import { ReactNode } from 'react';
-import { useMatch } from 'react-router';
+import { useLocation, useMatch } from 'react-router';
 import { Link, useResolvedPath } from 'remix';
 import FaIcon from '~/components/FaIcon';
 
@@ -23,6 +23,8 @@ function LabelLink({
   labelId: number | 'new';
   children?: ReactNode;
 }): JSX.Element {
+  const { search } = useLocation();
+
   const to = `/labels/${labelId}`;
   const resolved = useResolvedPath(to);
   const match = useMatch({ path: resolved.pathname, end: false });
@@ -32,12 +34,12 @@ function LabelLink({
       secondaryAction={
         labelId !== 'new' && (
           <>
-            <Link to={`${to}/edit`}>
+            <Link to={`${to}/edit${search}`}>
               <IconButton aria-label="edit">
                 <FaIcon icon={faPencil} />
               </IconButton>
             </Link>
-            <Link to={`${to}/delete`}>
+            <Link to={`${to}/delete${search}`}>
               <IconButton aria-label="delete" color="error">
                 <FaIcon icon={faTrash} />
               </IconButton>
@@ -48,7 +50,11 @@ function LabelLink({
       // Make the selection go all the way to the edge
       sx={{ paddingRight: 0 }}
     >
-      <ListItemButton selected={Boolean(match)} component={Link} to={to}>
+      <ListItemButton
+        selected={Boolean(match)}
+        component={Link}
+        to={`${to}${search}`}
+      >
         {children}
       </ListItemButton>
     </ListItem>
