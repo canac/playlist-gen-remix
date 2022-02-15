@@ -26,6 +26,10 @@ const keywordSchema = z.union([
     name: z.literal('label'),
     labelId: z.number().min(1),
   }),
+  z.object({
+    name: z.literal('artist'),
+    artistName: z.string().min(1),
+  }),
 ]);
 
 type FilterData = {
@@ -149,6 +153,11 @@ export async function getCriteriaMatches(
         }
 
         return labelTracks.has(track.id);
+      }
+
+      if (keyword.name === 'artist') {
+        const { artistName } = keyword;
+        return track.artist.includes(artistName);
       }
 
       throw new Error(`Invalid keyword`);

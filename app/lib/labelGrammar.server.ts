@@ -10,6 +10,8 @@ declare var relativeDate: any;
 declare var releasedKw: any;
 declare var labelKw: any;
 declare var labelId: any;
+declare var artistKw: any;
+declare var artistName: any;
 declare var cleanKw: any;
 declare var explicitKw: any;
 declare var unlabeledKw: any;
@@ -75,6 +77,9 @@ const lexer = moo.compile({
   labelKw: 'label:',
   labelId: { match: /[1-9]\d*?/, value: (v) => parseInt(v, 10) },
 
+  artistKw: 'artist:',
+  artistName: { match: /\".+?\"/, value: (v) => v.slice(1, -1) },
+
   comparison: [
     { match: '<=', value: () => (l, r) => l <= r },
     { match: '>=', value: () => (l, r) => l >= r },
@@ -125,12 +130,14 @@ const grammar: Grammar = {
     {"name": "released", "symbols": [(lexer.has("releasedKw") ? {type: "releasedKw"} : releasedKw), (lexer.has("comparison") ? {type: "comparison"} : comparison), (lexer.has("absoluteDate") ? {type: "absoluteDate"} : absoluteDate)], "postprocess": x => ({ name: 'released', operation: x[1].value, ...x[2].value })},
     {"name": "released", "symbols": [(lexer.has("releasedKw") ? {type: "releasedKw"} : releasedKw), (lexer.has("comparison") ? {type: "comparison"} : comparison), (lexer.has("relativeDate") ? {type: "relativeDate"} : relativeDate)], "postprocess": x => ({ name: 'released', operation: x[1].value, ...x[2].value })},
     {"name": "label", "symbols": [(lexer.has("labelKw") ? {type: "labelKw"} : labelKw), (lexer.has("labelId") ? {type: "labelId"} : labelId)], "postprocess": x => ({ name: 'label', labelId: x[1].value })},
+    {"name": "artist", "symbols": [(lexer.has("artistKw") ? {type: "artistKw"} : artistKw), (lexer.has("artistName") ? {type: "artistName"} : artistName)], "postprocess": x => ({ name: 'artist', artistName: x[1].value })},
     {"name": "value", "symbols": [(lexer.has("cleanKw") ? {type: "cleanKw"} : cleanKw)], "postprocess": x => ({ name: 'clean' })},
     {"name": "value", "symbols": [(lexer.has("explicitKw") ? {type: "explicitKw"} : explicitKw)], "postprocess": x => ({ name: 'explicit' })},
     {"name": "value", "symbols": [(lexer.has("unlabeledKw") ? {type: "unlabeledKw"} : unlabeledKw)], "postprocess": x => ({ name: 'unlabeled' })},
     {"name": "value", "symbols": ["added"], "postprocess": x => x[0]},
     {"name": "value", "symbols": ["released"], "postprocess": x => x[0]},
     {"name": "value", "symbols": ["label"], "postprocess": x => x[0]},
+    {"name": "value", "symbols": ["artist"], "postprocess": x => x[0]},
     {"name": "parentheses", "symbols": [(lexer.has("lparen") ? {type: "lparen"} : lparen), "binary", (lexer.has("rparen") ? {type: "rparen"} : rparen)], "postprocess": x => x[1]},
     {"name": "parentheses", "symbols": ["value"], "postprocess": x => get => get(x[0])},
     {"name": "unary", "symbols": [(lexer.has("not") ? {type: "not"} : not), "parentheses"], "postprocess": x => get => !x[1](get)},

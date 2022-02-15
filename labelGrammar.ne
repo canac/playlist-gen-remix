@@ -54,6 +54,9 @@ const lexer = moo.compile({
   labelKw: 'label:',
   labelId: { match: /[1-9]\d*?/, value: (v) => parseInt(v, 10) },
 
+  artistKw: 'artist:',
+  artistName: { match: /\".+?\"/, value: (v) => v.slice(1, -1) },
+
   comparison: [
     { match: '<=', value: () => (l, r) => l <= r },
     { match: '>=', value: () => (l, r) => l >= r },
@@ -79,12 +82,14 @@ added -> %addedKw %comparison %absoluteDate {% x => ({ name: 'added', operation:
 released -> %releasedKw %comparison %absoluteDate {% x => ({ name: 'released', operation: x[1].value, ...x[2].value }) %}
           | %releasedKw %comparison %relativeDate {% x => ({ name: 'released', operation: x[1].value, ...x[2].value }) %}
 label -> %labelKw %labelId {% x => ({ name: 'label', labelId: x[1].value }) %}
+artist -> %artistKw %artistName {% x => ({ name: 'artist', artistName: x[1].value }) %}
 value -> %cleanKw {% x => ({ name: 'clean' }) %}
        | %explicitKw {% x => ({ name: 'explicit' }) %}
        | %unlabeledKw {% x => ({ name: 'unlabeled' }) %}
        | added {% x => x[0] %}
        | released {% x => x[0] %}
        | label {% x => x[0] %}
+       | artist {% x => x[0] %}
 parentheses -> %lparen binary %rparen {% x => x[1] %}
              | value {% x => get => get(x[0]) %}
 unary -> %not parentheses {% x => get => !x[1](get) %}
