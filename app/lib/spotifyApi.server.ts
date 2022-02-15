@@ -93,14 +93,15 @@ const TracksResponse = z.object({
               url: z.string(),
             }),
           ),
+          release_date: z.string(),
         }),
         artists: z.array(
           z.object({
             name: z.string(),
           }),
         ),
-        id: z.string(),
         explicit: z.boolean(),
+        id: z.string(),
         name: z.string(),
       }),
     }),
@@ -132,6 +133,7 @@ export async function syncFavoriteTracks(user: User): Promise<void> {
       artist: item.track.artists.map((artist) => artist.name).join(' & '),
       thumbnailUrl: item.track.album.images[0].url,
       dateAdded: item.added_at,
+      dateReleased: new Date(item.track.album.release_date),
       explicit: item.track.explicit,
     }));
 

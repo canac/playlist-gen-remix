@@ -28,6 +28,7 @@ model Track {
   artist       String
   thumbnailUrl String
   dateAdded    DateTime
+  dateReleased DateTime @default(now())
   explicit     Boolean
   labels       Label[]
 }
