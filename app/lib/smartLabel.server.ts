@@ -1,12 +1,31 @@
 import { Track } from '@prisma/client';
 import { difference, map } from 'lodash';
 import { Grammar, Parser } from 'nearley';
+import { z } from 'zod';
 import CacheToken from '~/lib/cacheToken';
 import grammar from '~/lib/labelGrammar.server';
 import { prisma } from '~/lib/prisma.server';
 
 // Initialize the parser for the smart label criteria
 const parser = new Parser(Grammar.fromCompiled(grammar));
+
+type GetFunc = (value: unknown) => boolean;
+
+const keywordSchema = z.union([
+  z.object({ name: z.literal('clean') }),
+  z.object({ name: z.literal('explicit') }),
+  z.object({ name: z.literal('unlabeled') }),
+  z.object({
+    name: z.literal('added'),
+    operation: z.function(z.tuple([z.number(), z.number()]), z.boolean()),
+    extract: z.function(z.tuple([z.date()]), z.number()),
+    rhs: z.number().min(1),
+  }),
+  z.object({
+    name: z.literal('label'),
+    labelId: z.number().min(1),
+  }),
+]);
 
 type FilterData = {
   // All of the user's tracks
@@ -17,8 +36,6 @@ type FilterData = {
   // The key is the label id, and the value is a set of the label's track ids
   indexedLabels: Map<number, Set<number>>;
 };
-
-type GetFunc = (value: string) => boolean;
 
 // Use a WeakMap so that as soon as the cache token that the caller is holding
 // onto goes out of scope, the cache item is removed as well
@@ -80,14 +97,6 @@ async function getFilterData(
   return dataPromise;
 }
 
-const operations = new Map<string, (left: number, right: number) => boolean>([
-  ['=', (l, r) => l === r],
-  ['<', (l, r) => l < r],
-  ['<=', (l, r) => l <= r],
-  ['>', (l, r) => l > r],
-  ['>=', (l, r) => l >= r],
-]);
-
 // Return an array of the tracks that match a given criteria string
 export async function getCriteriaMatches(
   userId: number,
@@ -110,31 +119,27 @@ export async function getCriteriaMatches(
   return tracks.filter((track) =>
     // Pass the evaluator a get method that looks up the values of each value
     // identifier passed in
-    evaluator((value) => {
-      if (value === 'explicit') {
+    evaluator((keywordRaw) => {
+      const keyword = keywordSchema.parse(keywordRaw);
+
+      if (keyword.name === 'explicit') {
         return track.explicit;
       }
-      if (value === 'clean') {
+      if (keyword.name === 'clean') {
         return !track.explicit;
       }
 
-      if (value === 'unlabeled') {
+      if (keyword.name === 'unlabeled') {
         return unlabeledTracks.has(track.id);
       }
 
-      const yearMatches = /^year(?<operation>[=<>]|<=|>=)(?<year>\d+)$/.exec(value);
-      if (yearMatches?.groups) {
-        const { operation, year } = yearMatches.groups;
-        const comparator = operations.get(operation);
-        if (!comparator) {
-          throw new Error(`Invalid operation "${operation}"`);
-        }
-        return comparator(track.dateAdded.getFullYear(), parseInt(year, 10));
+      if (keyword.name === 'added') {
+        const { operation, extract, rhs } = keyword;
+        return operation(extract(track.dateAdded), rhs);
       }
 
-      const labelMatches = /^label:(?<labelId>\d+)$/.exec(value);
-      if (labelMatches?.groups) {
-        const labelId = parseInt(labelMatches.groups.labelId, 10);
+      if (keyword.name === 'label') {
+        const { labelId } = keyword;
         const labelTracks = indexedLabels.get(labelId);
         if (!labelTracks) {
           throw new Error(`Referenced non-existent label "${labelId}"`);
@@ -143,7 +148,7 @@ export async function getCriteriaMatches(
         return labelTracks.has(track.id);
       }
 
-      throw new Error(`Invalid value "${value}"`);
+      throw new Error(`Invalid keyword`);
     }),
   );
 }
