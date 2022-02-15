@@ -11,16 +11,17 @@ const parser = new Parser(Grammar.fromCompiled(grammar));
 
 type GetFunc = (value: unknown) => boolean;
 
+const dateCompareKeyword = z.object({
+  operation: z.function(z.tuple([z.number(), z.number()]), z.boolean()),
+  extract: z.function(z.tuple([z.date()]), z.number()),
+  rhs: z.number().min(1),
+});
 const keywordSchema = z.union([
   z.object({ name: z.literal('clean') }),
   z.object({ name: z.literal('explicit') }),
   z.object({ name: z.literal('unlabeled') }),
-  z.object({
-    name: z.literal('added'),
-    operation: z.function(z.tuple([z.number(), z.number()]), z.boolean()),
-    extract: z.function(z.tuple([z.date()]), z.number()),
-    rhs: z.number().min(1),
-  }),
+  z.intersection(z.object({ name: z.literal('added') }), dateCompareKeyword),
+  z.intersection(z.object({ name: z.literal('released') }), dateCompareKeyword),
   z.object({
     name: z.literal('label'),
     labelId: z.number().min(1),
@@ -133,9 +134,11 @@ export async function getCriteriaMatches(
         return unlabeledTracks.has(track.id);
       }
 
-      if (keyword.name === 'added') {
+      if (keyword.name === 'added' || keyword.name === 'released') {
         const { operation, extract, rhs } = keyword;
-        return operation(extract(track.dateAdded), rhs);
+        const date =
+          keyword.name === 'added' ? track.dateAdded : track.dateReleased;
+        return operation(extract(date), rhs);
       }
 
       if (keyword.name === 'label') {

@@ -7,6 +7,7 @@ declare var addedKw: any;
 declare var comparison: any;
 declare var absoluteDate: any;
 declare var relativeDate: any;
+declare var releasedKw: any;
 declare var labelKw: any;
 declare var labelId: any;
 declare var cleanKw: any;
@@ -42,6 +43,7 @@ const lexer = moo.compile({
   explicitKw: 'explicit',
   unlabeledKw: 'unlabeled',
   addedKw: 'added',
+  releasedKw: 'released',
 
   // For both relative and absolute dates, we need a way to extract a number from the left hand side
   // date that will be compared to the right hand side number.
@@ -120,11 +122,14 @@ const grammar: Grammar = {
     {"name": "main", "symbols": ["binary"], "postprocess": id},
     {"name": "added", "symbols": [(lexer.has("addedKw") ? {type: "addedKw"} : addedKw), (lexer.has("comparison") ? {type: "comparison"} : comparison), (lexer.has("absoluteDate") ? {type: "absoluteDate"} : absoluteDate)], "postprocess": x => ({ name: 'added', operation: x[1].value, ...x[2].value })},
     {"name": "added", "symbols": [(lexer.has("addedKw") ? {type: "addedKw"} : addedKw), (lexer.has("comparison") ? {type: "comparison"} : comparison), (lexer.has("relativeDate") ? {type: "relativeDate"} : relativeDate)], "postprocess": x => ({ name: 'added', operation: x[1].value, ...x[2].value })},
+    {"name": "released", "symbols": [(lexer.has("releasedKw") ? {type: "releasedKw"} : releasedKw), (lexer.has("comparison") ? {type: "comparison"} : comparison), (lexer.has("absoluteDate") ? {type: "absoluteDate"} : absoluteDate)], "postprocess": x => ({ name: 'released', operation: x[1].value, ...x[2].value })},
+    {"name": "released", "symbols": [(lexer.has("releasedKw") ? {type: "releasedKw"} : releasedKw), (lexer.has("comparison") ? {type: "comparison"} : comparison), (lexer.has("relativeDate") ? {type: "relativeDate"} : relativeDate)], "postprocess": x => ({ name: 'released', operation: x[1].value, ...x[2].value })},
     {"name": "label", "symbols": [(lexer.has("labelKw") ? {type: "labelKw"} : labelKw), (lexer.has("labelId") ? {type: "labelId"} : labelId)], "postprocess": x => ({ name: 'label', labelId: x[1].value })},
     {"name": "value", "symbols": [(lexer.has("cleanKw") ? {type: "cleanKw"} : cleanKw)], "postprocess": x => ({ name: 'clean' })},
     {"name": "value", "symbols": [(lexer.has("explicitKw") ? {type: "explicitKw"} : explicitKw)], "postprocess": x => ({ name: 'explicit' })},
     {"name": "value", "symbols": [(lexer.has("unlabeledKw") ? {type: "unlabeledKw"} : unlabeledKw)], "postprocess": x => ({ name: 'unlabeled' })},
     {"name": "value", "symbols": ["added"], "postprocess": x => x[0]},
+    {"name": "value", "symbols": ["released"], "postprocess": x => x[0]},
     {"name": "value", "symbols": ["label"], "postprocess": x => x[0]},
     {"name": "parentheses", "symbols": [(lexer.has("lparen") ? {type: "lparen"} : lparen), "binary", (lexer.has("rparen") ? {type: "rparen"} : rparen)], "postprocess": x => x[1]},
     {"name": "parentheses", "symbols": ["value"], "postprocess": x => get => get(x[0])},

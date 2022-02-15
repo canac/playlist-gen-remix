@@ -22,6 +22,7 @@ const lexer = moo.compile({
   explicitKw: 'explicit',
   unlabeledKw: 'unlabeled',
   addedKw: 'added',
+  releasedKw: 'released',
 
   // For both relative and absolute dates, we need a way to extract a number from the left hand side
   // date that will be compared to the right hand side number.
@@ -75,11 +76,14 @@ const lexer = moo.compile({
 main -> binary {% id %}
 added -> %addedKw %comparison %absoluteDate {% x => ({ name: 'added', operation: x[1].value, ...x[2].value }) %}
        | %addedKw %comparison %relativeDate {% x => ({ name: 'added', operation: x[1].value, ...x[2].value }) %}
+released -> %releasedKw %comparison %absoluteDate {% x => ({ name: 'released', operation: x[1].value, ...x[2].value }) %}
+          | %releasedKw %comparison %relativeDate {% x => ({ name: 'released', operation: x[1].value, ...x[2].value }) %}
 label -> %labelKw %labelId {% x => ({ name: 'label', labelId: x[1].value }) %}
 value -> %cleanKw {% x => ({ name: 'clean' }) %}
        | %explicitKw {% x => ({ name: 'explicit' }) %}
        | %unlabeledKw {% x => ({ name: 'unlabeled' }) %}
        | added {% x => x[0] %}
+       | released {% x => x[0] %}
        | label {% x => x[0] %}
 parentheses -> %lparen binary %rparen {% x => x[1] %}
              | value {% x => get => get(x[0]) %}
