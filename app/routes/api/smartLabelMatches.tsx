@@ -20,6 +20,7 @@ const formSchema = withZod(
 
 const responseSchema = z.object({
   matchCount: z.number(),
+  matchExamples: z.array(z.string()),
 });
 
 export const outputSchema = formActionResponseSchema(responseSchema);
@@ -42,6 +43,7 @@ export const action: ActionFunction = async (actionArgs) =>
       return getCriteriaMatches(userId, smartCriteria)
         .then((matches) => ({
           matchCount: matches.length,
+          matchExamples: matches.slice(0, 5).map((track) => track.name),
         }))
         .catch(() => {
           throw new ValidationError('smartCriteria', 'Invalid smart criteria');

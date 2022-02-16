@@ -45,7 +45,7 @@ export default function SmartCriteriaInput(
       {fetcher.data && 'data' in fetcher.data && (
         <Typography>
           Smart criteria matches <strong>{fetcher.data.data.matchCount}</strong>{' '}
-          labels
+          labels including <em>{fetcher.data.data.matchExamples.join(', ')}</em>
         </Typography>
       )}
     </>
