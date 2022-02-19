@@ -1,4 +1,4 @@
-import { Box, Button } from '@mui/material';
+import { Box, Button } from '@mantine/core';
 import { ActionFunction, Form, MetaFunction, redirect } from 'remix';
 import { sessionStorage } from '~/lib/sessions.server';
 

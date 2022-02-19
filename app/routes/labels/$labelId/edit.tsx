@@ -1,4 +1,4 @@
-import { Box, Button, Typography } from '@mui/material';
+import { Box, Button, Title } from '@mantine/core';
 import { Label } from '@prisma/client';
 import { withZod } from '@remix-validated-form/with-zod';
 import {
@@ -12,7 +12,7 @@ import { ValidatedForm } from 'remix-validated-form';
 import { z } from 'zod';
 import { zfd } from 'zod-form-data';
 import SmartCriteriaInput from '~/components/SmartCriteriaInput';
-import ValidatedTextField from '~/components/ValidatedTextField';
+import ValidatedTextField from '~/components/ValidatedTextInput';
 import { extractIntFromParam } from '~/lib/helpers.server';
 import { ensureAuthenticated } from '~/lib/middleware.server';
 import { prisma } from '~/lib/prisma.server';
@@ -132,14 +132,11 @@ export default function EditLabelRoute() {
         gap: '1em',
       }}
     >
-      <Typography variant="h3" component="h2">
-        Edit label
-      </Typography>
+      <Title order={2}>Edit label</Title>
       <ValidatedTextField
         required
         name="name"
         label="Label name"
-        variant="outlined"
         fieldErrors={fieldErrors}
       />
       {label.smartCriteria === null ? null : (
@@ -148,7 +145,6 @@ export default function EditLabelRoute() {
             required
             name="smartCriteria"
             label="Smart criteria"
-            variant="outlined"
             fieldErrors={fieldErrors}
           />
         </>

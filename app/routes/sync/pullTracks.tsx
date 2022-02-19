@@ -1,5 +1,4 @@
-import { Box, Button, Typography } from '@mui/material';
-import { green } from '@mui/material/colors';
+import { Box, Button, Text, Title } from '@mantine/core';
 import { ActionFunction, Form, json, useActionData } from 'remix';
 import { ensureUser } from '~/lib/middleware.server';
 import { syncFavoriteTracks } from '~/lib/spotifyApi.server';
@@ -29,11 +28,13 @@ export default function PullTracksRoute() {
       method="post"
       action="/sync/pullTracks"
     >
-      <Typography variant="h6" component="h2">
+      <Title order={2} sx={{ marginBottom: '0.5em' }}>
         Pull liked tracks from Spotify
-      </Typography>
+      </Title>
       {data?.success && (
-        <Typography sx={{ color: green[500] }}>Success!</Typography>
+        <Text color="green" weight="bold">
+          Success!
+        </Text>
       )}
       <Button type="submit">Pull</Button>
     </Box>

@@ -1,5 +1,4 @@
-import { Box, Button, Typography } from '@mui/material';
-import { green } from '@mui/material/colors';
+import { Box, Button, Text, Title } from '@mantine/core';
 import { ActionFunction, Form, json, useActionData } from 'remix';
 import { ensureUser } from '~/lib/middleware.server';
 import { syncPlaylists } from '~/lib/spotifyApi.server';
@@ -29,11 +28,13 @@ export default function PushTracksRoute() {
       method="post"
       action="/sync/pushTracks"
     >
-      <Typography variant="h6" component="h2">
+      <Title order={2} sx={{ marginBottom: '0.5em' }}>
         Push tracks into Spotify playlists
-      </Typography>
+      </Title>
       {data?.success && (
-        <Typography sx={{ color: green[500] }}>Success!</Typography>
+        <Text color="green" weight="bold">
+          Success!
+        </Text>
       )}
       <Button type="submit">Push</Button>
     </Box>

@@ -1,14 +1,14 @@
-import { Typography } from '@mui/material';
+import { Text } from '@mantine/core';
 import { debounce } from 'lodash';
 import { useEffect } from 'react';
-import ValidatedTextField, {
-  ValidatedTextFieldProps,
-} from '~/components/ValidatedTextField';
+import ValidatedTextInput, {
+  ValidatedTextInputProps,
+} from '~/components/ValidatedTextInput';
 import { useValidatedFetcher } from '~/lib/validatedAction';
 import { outputSchema } from '~/routes/api/smartLabelMatches';
 
 export default function SmartCriteriaInput(
-  props: ValidatedTextFieldProps,
+  props: ValidatedTextInputProps,
 ): JSX.Element {
   const fetcher = useValidatedFetcher(outputSchema);
 
@@ -31,7 +31,7 @@ export default function SmartCriteriaInput(
 
   return (
     <>
-      <ValidatedTextField
+      <ValidatedTextInput
         {...props}
         onChange={debounce(
           (event: React.ChangeEvent<HTMLInputElement>) =>
@@ -40,13 +40,15 @@ export default function SmartCriteriaInput(
         )}
       />
       {fetcher.data && 'error' in fetcher.data && (
-        <Typography color="error">Invalid smart criteria</Typography>
+        <Text color="red" weight="bold">
+          Invalid smart criteria
+        </Text>
       )}
       {fetcher.data && 'data' in fetcher.data && (
-        <Typography>
+        <Text>
           Smart criteria matches <strong>{fetcher.data.data.matchCount}</strong>{' '}
           labels including <em>{fetcher.data.data.matchExamples.join(', ')}</em>
-        </Typography>
+        </Text>
       )}
     </>
   );
