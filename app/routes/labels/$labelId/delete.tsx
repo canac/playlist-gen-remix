@@ -31,15 +31,17 @@ const paramsSchema = zfd.formData({
   labelId: zfd.numeric(z.number().min(0)),
 });
 
-const formSchema = withZod(
-  z.object({
-    confirm: zfd.checkbox(),
-  }),
-);
+const formSchema = z.object({
+  confirm: zfd.checkbox(),
+});
+const formValidator = withZod(formSchema);
 
 const responseSchema = z.null();
 
-export const outputSchema = formActionResponseSchema(responseSchema);
+export const outputSchema = formActionResponseSchema(
+  responseSchema,
+  formSchema,
+);
 
 // Delete a label
 export const action: ActionFunction = async (actionArgs) =>
@@ -108,7 +110,7 @@ export default function DeleteLabelRoute() {
   return (
     <Box
       component={ValidatedForm}
-      validator={formSchema}
+      validator={formValidator}
       method="post"
       sx={{
         width: '25em',

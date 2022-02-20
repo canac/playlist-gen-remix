@@ -25,23 +25,25 @@ export const meta: MetaFunction = () => ({
 
 const paramsSchema = zfd.formData({});
 
-const formSchema = withZod(
-  z
-    .object({
-      name: z.string().nonempty('Label name is required'),
-      smartLabel: zfd.checkbox(),
-      smartCriteria: z.string().optional(),
-    })
-    // Smart criteria cannot be empty when smart label checkbox is checked
-    .refine((data) => !(data.smartLabel && data.smartCriteria?.length === 0), {
-      message: 'Smart criteria must not be empty',
-      path: ['smartCriteria'],
-    }),
-);
+const formSchema = z
+  .object({
+    name: z.string().nonempty('Label name is required'),
+    smartLabel: zfd.checkbox(),
+    smartCriteria: z.string().optional(),
+  })
+  // Smart criteria cannot be empty when smart label checkbox is checked
+  .refine((data) => !(data.smartLabel && data.smartCriteria?.length === 0), {
+    message: 'Smart criteria must not be empty',
+    path: ['smartCriteria'],
+  });
+const formValidator = withZod(formSchema);
 
 const responseSchema = z.null();
 
-export const outputSchema = formActionResponseSchema(responseSchema);
+export const outputSchema = formActionResponseSchema(
+  responseSchema,
+  formSchema,
+);
 
 // Create a new label
 export const action: ActionFunction = async (actionArgs) =>
@@ -89,11 +91,7 @@ export default function NewLabelRoute() {
       ? actionData.error.fieldErrors
       : undefined;
   const defaultValues =
-    actionData && 'error' in actionData
-      ? (actionData.submittedData as Record<string, unknown> & {
-          smartLabel: boolean;
-        })
-      : undefined;
+    actionData && 'error' in actionData ? actionData.submittedData : undefined;
 
   const isHydrated = useHydrated();
 
@@ -104,7 +102,7 @@ export default function NewLabelRoute() {
   return (
     <Box
       component={ValidatedForm}
-      validator={formSchema}
+      validator={formValidator}
       method="post"
       defaultValues={defaultValues}
       sx={{

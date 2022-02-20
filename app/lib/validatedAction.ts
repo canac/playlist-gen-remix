@@ -1,6 +1,7 @@
 import { DataFunctionArgs } from '@remix-run/server-runtime';
+import { withZod } from '@remix-validated-form/with-zod';
 import { useActionData, useFetcher } from 'remix';
-import { ValidationResult, Validator } from 'remix-validated-form';
+import { ValidationResult } from 'remix-validated-form';
 import { ZodSchema, z } from 'zod';
 
 // When a ValidationError is thrown in an validated form action, the action
@@ -21,11 +22,12 @@ export class ValidationError extends Error {
 // provides greater type safety and validates inputs against a provided schema
 export async function validatedFormAction<
   FormSchema,
+  FormTypeDef,
   ParamsSchema,
   ResponseSchema,
 >(args: {
   actionArgs: DataFunctionArgs;
-  formSchema: Validator<FormSchema>;
+  formSchema: ZodSchema<FormSchema, FormTypeDef, unknown>;
   paramsSchema: ZodSchema<ParamsSchema>;
   responseSchema: ZodSchema<ResponseSchema>;
   action: (
@@ -38,7 +40,7 @@ export async function validatedFormAction<
 
   // Parse the form data using the provided schema
   const formData = await args.actionArgs.request.formData();
-  const formResult = await args.formSchema.validate(formData);
+  const formResult = await withZod(args.formSchema).validate(formData);
   if (formResult.error) {
     return formResult;
   }
@@ -72,21 +74,24 @@ export async function validatedFormAction<
 
 // Given a schema representing action response data, return a schema representing
 // a ValidationResult schema that wraps that data
-export function formActionResponseSchema<Data>(data: ZodSchema<Data>) {
+export function formActionResponseSchema<Data, Form, FormTypeDef, FormInput>(
+  data: ZodSchema<Data>,
+  formSchema: ZodSchema<Form, FormTypeDef, FormInput>,
+) {
   return z.union([
     z.object({ data }),
     z.object({
       error: z.object({
         fieldErrors: z.record(z.string()),
       }),
-      submittedData: z.record(z.any()),
+      submittedData: formSchema,
     }),
   ]);
 }
 
 // Extends useActionData by validating the response against a provided schema
-export function useValidatedActionData<Schema>(
-  schema: ZodSchema<Schema>,
+export function useValidatedActionData<Schema, SchemaTypeDef>(
+  schema: ZodSchema<Schema, SchemaTypeDef, unknown>,
 ): Schema | undefined {
   const data = useActionData<unknown>();
   return typeof data === 'undefined' ? undefined : schema.parse(data);

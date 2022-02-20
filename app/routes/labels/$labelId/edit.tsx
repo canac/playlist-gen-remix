@@ -32,19 +32,20 @@ const paramsSchema = zfd.formData({
   labelId: zfd.numeric(z.number().min(0)),
 });
 
-const formSchema = withZod(
-  z.object({
-    name: z.string().nonempty('Label name is required'),
-    smartCriteria: z
-      .string()
-      .nonempty('Smart criteria must not be empty')
-      .optional(),
-  }),
-);
-
+const formSchema = z.object({
+  name: z.string().nonempty('Label name is required'),
+  smartCriteria: z
+    .string()
+    .nonempty('Smart criteria must not be empty')
+    .optional(),
+});
+const formValidator = withZod(formSchema);
 const responseSchema = z.null();
 
-export const outputSchema = formActionResponseSchema(responseSchema);
+export const outputSchema = formActionResponseSchema(
+  responseSchema,
+  formSchema,
+);
 
 // Edit a label
 export const action: ActionFunction = async (actionArgs) =>
@@ -119,7 +120,7 @@ export default function EditLabelRoute() {
   return (
     <Box
       component={ValidatedForm}
-      validator={formSchema}
+      validator={formValidator}
       method="post"
       key={label.id}
       defaultValues={

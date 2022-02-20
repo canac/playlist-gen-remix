@@ -1,4 +1,3 @@
-import { withZod } from '@remix-validated-form/with-zod';
 import { ActionFunction } from 'remix';
 import { z } from 'zod';
 import { zfd } from 'zod-form-data';
@@ -12,18 +11,19 @@ import {
 
 const paramsSchema = zfd.formData({});
 
-const formSchema = withZod(
-  z.object({
-    smartCriteria: z.string().nonempty('Smart criteria must not be empty'),
-  }),
-);
+const formSchema = z.object({
+  smartCriteria: z.string().nonempty('Smart criteria must not be empty'),
+});
 
 const responseSchema = z.object({
   matchCount: z.number(),
   matchExamples: z.array(z.string()),
 });
 
-export const outputSchema = formActionResponseSchema(responseSchema);
+export const outputSchema = formActionResponseSchema(
+  responseSchema,
+  formSchema,
+);
 
 /*
  * Get information about the tracks that match a smart label.
