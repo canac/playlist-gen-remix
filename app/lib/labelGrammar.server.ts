@@ -69,7 +69,7 @@ const lexer = moo.compile({
           }
         : {
             // Compare the rhs and lhs only by their date, ignore time of day
-            rhs: parse(v, 'M-d-yyyy', startOfDay(new Date()).getTime()),
+            rhs: parse(v, 'M-d-yyyy', startOfDay(new Date())).getTime(),
             extract: (date) => startOfDay(date).getTime(),
           },
   },
