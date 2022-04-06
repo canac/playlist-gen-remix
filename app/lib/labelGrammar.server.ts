@@ -75,7 +75,7 @@ const lexer = moo.compile({
   },
 
   labelKw: 'label:',
-  labelId: { match: /[1-9]\d*?/, value: (v) => parseInt(v, 10) },
+  labelId: { match: /[1-9]\d*/, value: (v) => parseInt(v, 10) },
 
   artistKw: 'artist:',
   artistName: { match: /\".+?\"/, value: (v) => v.slice(1, -1) },
