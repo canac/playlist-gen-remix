@@ -2,7 +2,7 @@ import { ActionFunction } from 'remix';
 import { z } from 'zod';
 import { zfd } from 'zod-form-data';
 import { ensureAuthenticated } from '~/lib/middleware.server';
-import { getCriteriaMatches } from '~/lib/smartLabel.server';
+import { generatePrismaFilter } from '~/lib/smartLabel.server';
 import {
   ValidationError,
   formActionResponseSchema,
@@ -40,13 +40,18 @@ export const action: ActionFunction = async (actionArgs) =>
     async action({ request, data: { smartCriteria } }) {
       const userId = await ensureAuthenticated(request);
 
-      return getCriteriaMatches(userId, smartCriteria)
-        .then((matches) => ({
-          matchCount: matches.length,
-          matchExamples: matches.slice(0, 5).map((track) => track.name),
-        }))
-        .catch(() => {
-          throw new ValidationError('smartCriteria', 'Invalid smart criteria');
-        });
+      const where = generatePrismaFilter(smartCriteria);
+      if (where === null) {
+        throw new ValidationError('smartCriteria', 'Invalid smart criteria');
+      }
+
+      const matches = await prisma.track.findMany({
+        where: { userId, ...where },
+        select: { name: true },
+      });
+      return {
+        matchCount: matches.length,
+        matchExamples: matches.slice(0, 5).map((track) => track.name),
+      };
     },
   });

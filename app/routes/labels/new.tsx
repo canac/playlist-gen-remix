@@ -58,7 +58,7 @@ export const action: ActionFunction = async (actionArgs) =>
       if (
         smartLabel &&
         typeof smartCriteria === 'string' &&
-        !(await validateSmartCriteria(userId, smartCriteria))
+        !validateSmartCriteria(smartCriteria)
       ) {
         throw new ValidationError('smartCriteria', 'Invalid smart criteria');
       }

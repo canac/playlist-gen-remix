@@ -4,10 +4,9 @@ import { User } from '@prisma/client';
 import { chunk, differenceBy, map } from 'lodash';
 import log from 'loglevel';
 import { z } from 'zod';
-import CacheToken from '~/lib/cacheToken';
 import { env } from '~/lib/env.server';
 import { prisma } from '~/lib/prisma.server';
-import { getCriteriaMatches } from '~/lib/smartLabel.server';
+import { generatePrismaFilter } from '~/lib/smartLabel.server';
 
 // POST https://accounts.spotify.com/api/token
 // Only includes fields that we care about
@@ -227,7 +226,6 @@ export async function syncPlaylists(user: User): Promise<void> {
   });
 
   // Push the playlists to Spotify in parallel
-  const cacheToken = new CacheToken();
   await Promise.all(
     dbPlaylists.map(async (playlist): Promise<void> => {
       const dummyTrackSpotifyId = '41MCdlvXOl62B7Kv86Bb1v';
@@ -237,14 +235,14 @@ export async function syncPlaylists(user: User): Promise<void> {
       // Override the tracks for smart labels
       const { smartCriteria } = playlist.label;
       if (smartCriteria !== null) {
-        tracks = await getCriteriaMatches(
-          user.id,
-          smartCriteria,
-          cacheToken,
-        ).catch((err) => {
+        tracks = [];
+        try {
+          tracks = await prisma.track.findMany({
+            where: { userId: user.id, ...generatePrismaFilter(smartCriteria) },
+          });
+        } catch (err) {
           log.error(err);
-          return [];
-        });
+        }
       }
 
       // Replace the tracks in the Spotify playlist with the new tracks

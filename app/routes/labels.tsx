@@ -11,11 +11,10 @@ import {
   useLoaderData,
 } from 'remix';
 import LabelList from '~/components/LabelList';
-import CacheToken from '~/lib/cacheToken';
 import { extractIntFromSearchParams } from '~/lib/helpers.server';
 import { ensureAuthenticated } from '~/lib/middleware.server';
 import { prisma } from '~/lib/prisma.server';
-import { getCriteriaMatches } from '~/lib/smartLabel.server';
+import { generatePrismaFilter } from '~/lib/smartLabel.server';
 import { attemptOr } from '~/lib/util';
 
 type LabelsData = {
@@ -65,17 +64,26 @@ export const loader: LoaderFunction = async ({ request }) => {
 
   const numPages = Math.ceil(user._count.labels / pageSize);
 
+  // Count the number of tracks matching a smart label
+  async function countTracks(smartCriteria: string): Promise<number> {
+    const where = generatePrismaFilter(smartCriteria);
+    if (where === null) {
+      return 0;
+    }
+    const tracks = await prisma.track.findMany({
+      where: { userId, ...where },
+      select: { id: true },
+    });
+    return tracks.length;
+  }
+
   // Calculate the track counts
-  const cacheToken = new CacheToken();
   const labels = await Promise.all(
     user.labels.map(async ({ _count, ...label }) => {
       const numTracks =
         label.smartCriteria === null
           ? _count.tracks
-          : await getCriteriaMatches(userId, label.smartCriteria, cacheToken)
-              .then((matches) => matches.length)
-              // Suppress errors calculating the matches and default to 0
-              .catch(() => 0);
+          : await countTracks(label.smartCriteria);
       return { ...label, numTracks };
     }),
   );
