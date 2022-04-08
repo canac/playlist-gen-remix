@@ -11,3 +11,25 @@ export function attemptOr<Result, Default>(
     return defaultValue;
   }
 }
+
+// Build a URL from a base URL and a collection of query string params, but
+// omit params that match the default value
+export function buildUrl(
+  base: string,
+  qsParams: Array<{
+    name: string;
+    defaultValue: string | number | boolean;
+    value: string | number | boolean | null;
+  }>,
+): string {
+  const params: Array<[string, string]> = qsParams.flatMap(
+    ({ name, value, defaultValue }) =>
+      value === null || value === defaultValue
+        ? []
+        : [[name, value.toString()]],
+  );
+  if (params.length === 0) {
+    return base;
+  }
+  return `${base}?${new URLSearchParams(params).toString()}`;
+}

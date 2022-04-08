@@ -15,7 +15,7 @@ import { extractIntFromSearchParams } from '~/lib/helpers.server';
 import { ensureAuthenticated } from '~/lib/middleware.server';
 import { prisma } from '~/lib/prisma.server';
 import { generatePrismaFilter } from '~/lib/smartLabel.server';
-import { attemptOr } from '~/lib/util';
+import { attemptOr, buildUrl } from '~/lib/util';
 
 type LabelsData = {
   labels: (Label & {
@@ -131,11 +131,9 @@ export default function Labels() {
             renderItem={(item) => (
               <PaginationItem
                 component={Link}
-                to={
-                  item.page === null || item.page === 1
-                    ? '/labels'
-                    : `/labels?page=${item.page}`
-                }
+                to={buildUrl('/labels', [
+                  { name: 'page', defaultValue: 1, value: item.page },
+                ])}
                 {...item}
               />
             )}
