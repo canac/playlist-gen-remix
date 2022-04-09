@@ -1,5 +1,5 @@
 import { faMagnifyingGlass } from '@fortawesome/free-solid-svg-icons';
-import { TextInput } from '@mantine/core';
+import { Autocomplete } from '@mantine/core';
 import { Box, Pagination, PaginationItem } from '@mui/material';
 import { Album, Artist, Label, Track } from '@prisma/client';
 import { useEffect, useState } from 'react';
@@ -21,6 +21,11 @@ import { prisma } from '~/lib/prisma.server';
 import { generatePrismaFilter } from '~/lib/smartLabel.server';
 import { buildUrl } from '~/lib/util';
 
+type CriteriaExample = {
+  value: string;
+  description: string;
+};
+
 type IndexData = {
   tracks: (Track & {
     album: Album;
@@ -31,6 +36,7 @@ type IndexData = {
   pageIndex: number;
   pageCount: number;
   search: string;
+  criteriaExamples: CriteriaExample[];
 };
 
 const searchParams = zfd.formData({
@@ -86,6 +92,46 @@ export const loader: LoaderFunction = async ({ request }) => {
     throw redirect('/auth/login');
   }
 
+  const criteriaExamples: CriteriaExample[] = [
+    { value: 'clean', description: 'Clean' },
+    { value: 'explicit', description: 'Explicit' },
+    { value: 'unlabeled', description: 'Unlabeled' },
+
+    { value: 'added=2020', description: 'Added in 2020' },
+    { value: 'added<=2020', description: 'Added before or in 2020' },
+    { value: 'added>2020', description: 'Added after 2020' },
+    { value: 'added<4-1-2020', description: 'Added before April 1, 2020' },
+    {
+      value: 'added>=4-1-2020',
+      description: 'Added after or on April 1, 2020',
+    },
+    { value: 'added=7d', description: 'Added 7 days ago' },
+    { value: 'added<3m', description: 'Added less than 3 months ago' },
+    { value: 'added>=1y', description: 'Added more than 1 year ago' },
+
+    { value: 'released=2020', description: 'Released in 2020' },
+    { value: 'released<=2020', description: 'Released before or in 2020' },
+    { value: 'released>2020', description: 'Released after 2020' },
+    {
+      value: 'released<4-1-2020',
+      description: 'Released before April 1, 2020',
+    },
+    {
+      value: 'released>=4-1-2020',
+      description: 'Released after or on April 1, 2020',
+    },
+    { value: 'released=7d', description: 'Released 7 days ago' },
+    { value: 'released<3m', description: 'Released less than 3 months ago' },
+    { value: 'released>=1y', description: 'Released more than 1 year ago' },
+
+    ...user.labels.map((label) => ({
+      value: `label:${label.id}`,
+      description: `Has label "${label.name}"`,
+    })),
+
+    { value: 'artist:"Taylor Swift"', description: 'Artist is Taylor Swift' },
+  ];
+
   const numTrackPages = Math.ceil(numTracks / trackPageSize);
   const { labels, tracks } = user;
   return json<IndexData>({
@@ -94,6 +140,7 @@ export const loader: LoaderFunction = async ({ request }) => {
     pageCount: Math.max(numTrackPages, 1),
     pageIndex: trackPage,
     search,
+    criteriaExamples,
   });
 };
 
@@ -105,6 +152,27 @@ export const meta: MetaFunction = () => ({
 export default function Index() {
   const data = useLoaderData<IndexData>();
 
+  const [search, setSearch] = useState(data.search);
+
+  const criteriaExamples = data.criteriaExamples.map(
+    ({ value, description }) => {
+      // Break the search query into the tail (the incomplete search term) and
+      // the head (the rest of the search)
+      const matches = /^(.*?[!(]*)([\S]*)$/.exec(search);
+      if (!matches) {
+        throw new Error('Failed to match search');
+      }
+      const searchHead = matches[1];
+
+      return {
+        value: `${searchHead}${value}`,
+        label: `${
+          searchHead.length === 0 ? '' : '... '
+        }${value} (${description})`,
+      };
+    },
+  );
+
   // Sync the pagination page with the page in the query when it changes
   const [page, setPage] = useState(data.pageIndex + 1);
   useEffect(() => {
@@ -114,12 +182,15 @@ export default function Index() {
   return (
     <>
       <Form style={{ padding: '1em' }}>
-        <TextInput
+        <Autocomplete
           label="Search"
           name="search"
-          defaultValue={data.search}
+          defaultValue={search}
+          onChange={setSearch}
           size="md"
           rightSection={<FaIcon icon={faMagnifyingGlass} />}
+          data={criteriaExamples}
+          limit={10}
         />
       </Form>
       <TrackList tracks={data.tracks} labels={data.labels}></TrackList>
