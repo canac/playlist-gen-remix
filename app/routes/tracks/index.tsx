@@ -107,7 +107,11 @@ export default function Index() {
             renderItem={(item) => (
               <PaginationItem
                 component={Link}
-                to={item.page === 1 ? './' : `./?page=${item.page}`}
+                to={
+                  item.page === null || item.page === 1
+                    ? './'
+                    : `./?page=${item.page}`
+                }
                 {...item}
               />
             )}
