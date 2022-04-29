@@ -1,7 +1,7 @@
 // Expose higher-level methods for interacting with the Spotify API
 
-import { User } from '@prisma/client';
-import { chunk, differenceBy, map } from 'lodash';
+import { Prisma, User } from '@prisma/client';
+import { chunk, differenceBy, map, pick, uniqBy } from 'lodash';
 import log from 'loglevel';
 import { z } from 'zod';
 import { env } from '~/lib/env.server';
@@ -87,15 +87,18 @@ const TracksResponse = z.object({
       added_at: z.string(),
       track: z.object({
         album: z.object({
+          id: z.string(),
           images: z.array(
             z.object({
               url: z.string(),
             }),
           ),
+          name: z.string(),
           release_date: z.string(),
         }),
         artists: z.array(
           z.object({
+            id: z.string(),
             name: z.string(),
           }),
         ),
@@ -126,17 +129,47 @@ export async function syncFavoriteTracks(user: User): Promise<void> {
         ),
       ),
     );
-    const newTracks = tracks.items.map((item) => ({
+
+    // Create the albums that the tracks reference
+    const albumsPromise = prisma.album.createMany({
+      data: uniqBy(
+        tracks.items.map(({ track: { album } }) => ({
+          id: album.id,
+          name: album.name,
+          thumbnailUrl: album.images[0].url,
+          dateReleased: new Date(album.release_date),
+        })),
+        'id',
+      ),
+      skipDuplicates: true,
+    });
+
+    // Create the artists that the tracks reference
+    const artistsPromise = prisma.artist.createMany({
+      data: uniqBy(
+        tracks.items.flatMap(({ track: { artists } }) => artists),
+        'id',
+      ),
+      skipDuplicates: true,
+    });
+
+    // Create albums and artists in parallel
+    await Promise.all([albumsPromise, artistsPromise]);
+
+    // Create the tracks themselves
+    const newTracks: Prisma.TrackCreateInput[] = tracks.items.map((item) => ({
+      user: { connect: { id: user.id } },
       spotifyId: item.track.id,
       name: item.track.name,
-      artist: item.track.artists.map((artist) => artist.name).join(' & '),
-      thumbnailUrl: item.track.album.images[0].url,
+      album: { connect: { id: item.track.album.id } },
+      artists: {
+        connect: item.track.artists.map((artist) => pick(artist, ['id'])),
+      },
       dateAdded: item.added_at,
-      dateReleased: new Date(item.track.album.release_date),
       explicit: item.track.explicit,
     }));
 
-    // See if any of those tracks are already in the database
+    // See if any of the tracks are already in the database
     const existingTracks = await prisma.track.findMany({
       select: { spotifyId: true },
       where: {
@@ -147,9 +180,9 @@ export async function syncFavoriteTracks(user: User): Promise<void> {
 
     // Add the missing tracks to the database
     const missingTracks = differenceBy(newTracks, existingTracks, 'spotifyId');
-    await prisma.track.createMany({
-      data: missingTracks.map((track) => ({ ...track, userId: user.id })),
-    });
+    await Promise.all(
+      missingTracks.map((track) => prisma.track.create({ data: track })),
+    );
 
     if (missingTracks.length === limit) {
       // All of the tracks were missing, so load another, larger batch

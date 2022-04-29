@@ -1,9 +1,11 @@
 import { List } from '@mui/material';
-import { Label, Track } from '@prisma/client';
+import { Album, Artist, Label, Track } from '@prisma/client';
 import TrackItem from './TrackItem';
 
 export type TrackListProps = {
   tracks: (Track & {
+    album: Album;
+    artists: Artist[];
     labels: Label[];
   })[];
   labels: Label[];

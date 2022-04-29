@@ -1,5 +1,5 @@
 import { Box, Pagination, PaginationItem } from '@mui/material';
-import { Label, Track } from '@prisma/client';
+import { Album, Artist, Label, Track } from '@prisma/client';
 import React from 'react';
 import {
   Link,
@@ -17,6 +17,8 @@ import { attemptOr } from '~/lib/util';
 
 type IndexData = {
   tracks: (Track & {
+    album: Album;
+    artists: Artist[];
     labels: Label[];
   })[];
   labels: Label[];
@@ -44,8 +46,12 @@ export const loader: LoaderFunction = async ({ request }) => {
     where: { id: userId },
     include: {
       tracks: {
-        // Hide smart labels
-        include: { labels: { where: { smartCriteria: null } } },
+        include: {
+          album: true,
+          artists: true,
+          // Include regular labels, but hide smart labels
+          labels: { where: { smartCriteria: null } },
+        },
         orderBy: [{ dateAdded: 'desc' }],
         skip: trackPage * trackPageSize,
         take: trackPageSize,

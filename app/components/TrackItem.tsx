@@ -8,12 +8,15 @@ import {
   TextField,
   createFilterOptions,
 } from '@mui/material';
-import { Label, Track } from '@prisma/client';
+import { Album, Artist, Label, Track } from '@prisma/client';
+import { map } from 'lodash';
 import { useEffect, useState } from 'react';
 import { useFetcher } from 'remix';
 
 export type TrackItemProps = {
   track: Track & {
+    album: Album;
+    artists: Artist[];
     labels: Label[];
   };
   labels: Label[];
@@ -44,10 +47,13 @@ export default function TrackItem({
         <Avatar
           variant="square"
           alt={`${track.name} album artwork`}
-          src={track.thumbnailUrl}
+          src={track.album.thumbnailUrl}
         />
       </ListItemAvatar>
-      <ListItemText primary={track.name} secondary={track.artist} />
+      <ListItemText
+        primary={track.name}
+        secondary={map(track.artists, 'name').join(' & ')}
+      />
       <Autocomplete
         multiple
         value={labelsState}

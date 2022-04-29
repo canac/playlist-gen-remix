@@ -19,16 +19,31 @@ model User {
   playlist             Playlist[]
 }
 
+model Album {
+  id           String  @id
+  name         String
+  thumbnailUrl String
+  dateReleased DateTime
+  Track        Track[]
+}
+
+model Artist {
+  id     String   @id
+  name   String
+  genres String[]
+  Track  Track[]
+}
+
 model Track {
   id           Int      @id @default(autoincrement())
   userId       Int
   user         User     @relation(fields: [userId], references: [id])
   spotifyId    String   @unique
   name         String
-  artist       String
-  thumbnailUrl String
+  albumId      String
+  album        Album    @relation(fields: [albumId], references: [id])
+  artists      Artist[]
   dateAdded    DateTime
-  dateReleased DateTime @default(now())
   explicit     Boolean
   labels       Label[]
 }
