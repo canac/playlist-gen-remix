@@ -131,7 +131,11 @@ export default function Labels() {
             renderItem={(item) => (
               <PaginationItem
                 component={Link}
-                to={item.page === 1 ? '/labels' : `/labels?page=${item.page}`}
+                to={
+                  item.page === null || item.page === 1
+                    ? '/labels'
+                    : `/labels?page=${item.page}`
+                }
                 {...item}
               />
             )}
