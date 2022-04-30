@@ -3,4 +3,3 @@ migrations/
 node_modules/
 package-lock.json
 public/build/
-app/lib/labelGrammar.server.ts
