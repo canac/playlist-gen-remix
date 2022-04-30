@@ -2,6 +2,7 @@ import { faMagnifyingGlass } from '@fortawesome/free-solid-svg-icons';
 import { Autocomplete } from '@mantine/core';
 import { Box, Pagination, PaginationItem } from '@mui/material';
 import { Album, Artist, Label, Track } from '@prisma/client';
+import { uniqBy } from 'lodash';
 import { useEffect, useState } from 'react';
 import {
   Form,
@@ -84,13 +85,30 @@ export const loader: LoaderFunction = async ({ request }) => {
   const tracksCountPromise = prisma.track.count({
     where: { userId, ...where },
   });
-  const [user, numTracks] = await Promise.all([
+  // Load a few tracks to get examples of albums and artists for search autocomplete
+  const exampleTracksPromise = prisma.track.findMany({
+    where: { userId },
+    orderBy: [{ dateAdded: 'desc' }],
+    take: 5,
+    include: { album: true, artists: true },
+  });
+  const [user, numTracks, exampleTracks] = await Promise.all([
     userPromise,
     tracksCountPromise,
+    exampleTracksPromise,
   ]);
   if (user === null) {
     throw redirect('/auth/login');
   }
+
+  const albumExamples = uniqBy(
+    exampleTracks.map((track) => track.album),
+    'id',
+  );
+  const artistExamples = uniqBy(
+    exampleTracks.flatMap((track) => track.artists),
+    'id',
+  );
 
   const criteriaExamples: CriteriaExample[] = [
     { value: 'clean', description: 'Clean' },
@@ -128,8 +146,14 @@ export const loader: LoaderFunction = async ({ request }) => {
       value: `label:${label.id}`,
       description: `Has label "${label.name}"`,
     })),
-
-    { value: 'artist:"Taylor Swift"', description: 'Artist is Taylor Swift' },
+    ...albumExamples.map(({ name }) => ({
+      value: `album:"${name}"`,
+      description: `Album is ${name}`,
+    })),
+    ...artistExamples.map(({ name }) => ({
+      value: `artist:"${name}"`,
+      description: `Artist is ${name}`,
+    })),
   ];
 
   const numTrackPages = Math.ceil(numTracks / trackPageSize);

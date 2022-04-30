@@ -69,6 +69,9 @@ function makeRelativeComparison(operator: string, amount: number, unit: Unit): D
 
 const lexer = moo.compile({
   ws: / +/,
+  number: { match: /[1-9]\d*/, value: (v: string) => parseInt(v, 10) },
+  quotedString: { match: /\".+?\"/, value: (v: string) => v.slice(1, -1) },
+  dateUnit: ['d', 'm', 'y'],
 
   cleanKw: 'clean',
   explicitKw: 'explicit',
@@ -76,33 +79,11 @@ const lexer = moo.compile({
   addedKw: 'added',
   releasedKw: 'released',
 
-  relativeDate: {
-    match: /[1-9]\d*[dmy]/,
-    value: (v: string) => ({
-      unit: v.slice(-1),
-      amount: parseInt(v.slice(0, -1), 10),
-    }),
-  },
-  absoluteDate: {
-    match: /(?:[1-9]\d?\-[1-9]\d?\-)?\d{4}/,
-    value: (v: string) =>
-      v.length === 4
-        ? {
-            unit: 'y',
-            date: parse(v, 'yyyy', startOfDay(new Date())),
-          }
-        : {
-            unit: 'd',
-            date: parse(v, 'M-d-yyyy', startOfDay(new Date())),
-          },
-  },
-
   labelKw: 'label:',
-  labelId: { match: /[1-9]\d*/, value: (v: string) => parseInt(v, 10) },
-
+  albumKw: 'album:',
   artistKw: 'artist:',
-  artistName: { match: /\".+?\"/, value: (v: string) => v.slice(1, -1) },
 
+  dash: '-',
   comparison: ['<=', '>=', '<', '>', '='],
   not: '!',
   and: '&&',
@@ -117,15 +98,19 @@ const lexer = moo.compile({
 @lexer lexer
 
 main -> binary {% id %}
-added -> %addedKw %comparison %absoluteDate {% ([_, operator, date]): TrackWhereInput => ({ dateAdded: makeAbsoluteComparison(operator.value, date.value.date, date.value.unit) }) %}
-       | %addedKw %comparison %relativeDate {% ([_, operator, date]): TrackWhereInput => ({ dateAdded: makeRelativeComparison(operator.value, date.value.amount, date.value.unit)}) %}
-released -> %releasedKw %comparison %absoluteDate {% ([_, operator, date]): TrackWhereInput => ({ dateReleased: makeAbsoluteComparison(operator.value, date.value.date, date.value.unit) }) %}
-          | %releasedKw %comparison %relativeDate {% ([_, operator, date]): TrackWhereInput => ({ dateReleased: makeRelativeComparison(operator.value, date.value.amount, date.value.unit)}) %}
+relativeDate -> %number %dateUnit {% ([amount, unit]) => ({ amount: amount.value, unit: unit.value }) %}
+absoluteDate -> %number {% ([year]) => ({ unit: 'y', date: new Date(year.value, 0, 1) }) %}
+              | %number %dash %number %dash %number {% ([month, _a, day, _b, year]) => ({ unit: 'd', date: new Date(year.value, month.value - 1, day.value) }) %}
+added -> %addedKw %comparison absoluteDate {% ([_, operator, date]): TrackWhereInput => ({ dateAdded: makeAbsoluteComparison(operator.value, date.date, date.unit) }) %}
+       | %addedKw %comparison relativeDate {% ([_, operator, date]): TrackWhereInput => ({ dateAdded: makeRelativeComparison(operator.value, date.amount, date.unit)}) %}
+released -> %releasedKw %comparison absoluteDate {% ([_, operator, date]): TrackWhereInput => ({ album: { dateReleased: makeAbsoluteComparison(operator.value, date.date, date.unit) } }) %}
+          | %releasedKw %comparison relativeDate {% ([_, operator, date]): TrackWhereInput => ({ album: { dateReleased: makeRelativeComparison(operator.value, date.amount, date.unit) } }) %}
 value -> %cleanKw {% (_): TrackWhereInput => ({ explicit: false }) %}
        | %explicitKw {% (_): TrackWhereInput => ({ explicit: true }) %}
        | %unlabeledKw {% (_): TrackWhereInput => ({ labels: { none: {} } }) %}
-       | %labelKw %labelId {% ([_, labelId]): TrackWhereInput => ({ labels: { some: { id: labelId.value } } }) %}
-       | %artistKw %artistName {% ([_, artistName]): TrackWhereInput => ({ artist: { contains: artistName.value } }) %}
+       | %labelKw %number {% ([_, id]): TrackWhereInput => ({ labels: { some: { id: id.value } } }) %}
+       | %albumKw %quotedString {% ([_, name]: [unknown, string]): TrackWhereInput => ({ album: { name: name.value } }) %}
+       | %artistKw %quotedString {% ([_, name]: [unknown, string]): TrackWhereInput => ({ artists: { some: { name: name.value } } }) %}
        | added {% id %}
        | released {% id %}
 parentheses -> %lparen binary %rparen {% ([_, inner]) => inner %}

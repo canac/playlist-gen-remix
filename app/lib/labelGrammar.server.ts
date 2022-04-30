@@ -82,6 +82,9 @@ function makeRelativeComparison(
 
 const lexer = moo.compile({
   ws: / +/,
+  number: { match: /[1-9]\d*/, value: (v: string) => parseInt(v, 10) },
+  quotedString: { match: /\".+?\"/, value: (v: string) => v.slice(1, -1) },
+  dateUnit: ["d", "m", "y"],
 
   cleanKw: "clean",
   explicitKw: "explicit",
@@ -89,33 +92,11 @@ const lexer = moo.compile({
   addedKw: "added",
   releasedKw: "released",
 
-  relativeDate: {
-    match: /[1-9]\d*[dmy]/,
-    value: (v: string) => ({
-      unit: v.slice(-1),
-      amount: parseInt(v.slice(0, -1), 10),
-    }),
-  },
-  absoluteDate: {
-    match: /(?:[1-9]\d?\-[1-9]\d?\-)?\d{4}/,
-    value: (v: string) =>
-      v.length === 4
-        ? {
-            unit: "y",
-            date: parse(v, "yyyy", startOfDay(new Date())),
-          }
-        : {
-            unit: "d",
-            date: parse(v, "M-d-yyyy", startOfDay(new Date())),
-          },
-  },
-
   labelKw: "label:",
-  labelId: { match: /[1-9]\d*/, value: (v: string) => parseInt(v, 10) },
-
+  albumKw: "album:",
   artistKw: "artist:",
-  artistName: { match: /\".+?\"/, value: (v: string) => v.slice(1, -1) },
 
+  dash: "-",
   comparison: ["<=", ">=", "<", ">", "="],
   not: "!",
   and: "&&",
@@ -132,18 +113,33 @@ const grammar = new Grammar(
       postprocess: (d) => d[0],
     },
     {
-      name: "added",
+      name: "relativeDate",
+      symbols: [new TokenSymbol("number"), new TokenSymbol("dateUnit")],
+      postprocess: ([amount, unit]) => ({
+        amount: amount.value,
+        unit: unit.value,
+      }),
+    },
+    {
+      name: "absoluteDate",
+      symbols: [new TokenSymbol("number")],
+      postprocess: ([year]) => ({
+        unit: "y",
+        date: new Date(year.value, 0, 1),
+      }),
+    },
+    {
+      name: "absoluteDate",
       symbols: [
-        new TokenSymbol("addedKw"),
-        new TokenSymbol("comparison"),
-        new TokenSymbol("absoluteDate"),
+        new TokenSymbol("number"),
+        new TokenSymbol("dash"),
+        new TokenSymbol("number"),
+        new TokenSymbol("dash"),
+        new TokenSymbol("number"),
       ],
-      postprocess: ([_, operator, date]): TrackWhereInput => ({
-        dateAdded: makeAbsoluteComparison(
-          operator.value,
-          date.value.date,
-          date.value.unit
-        ),
+      postprocess: ([month, _a, day, _b, year]) => ({
+        unit: "d",
+        date: new Date(year.value, month.value - 1, day.value),
       }),
     },
     {
@@ -151,13 +147,24 @@ const grammar = new Grammar(
       symbols: [
         new TokenSymbol("addedKw"),
         new TokenSymbol("comparison"),
-        new TokenSymbol("relativeDate"),
+        new RuleSymbol("absoluteDate"),
+      ],
+      postprocess: ([_, operator, date]): TrackWhereInput => ({
+        dateAdded: makeAbsoluteComparison(operator.value, date.date, date.unit),
+      }),
+    },
+    {
+      name: "added",
+      symbols: [
+        new TokenSymbol("addedKw"),
+        new TokenSymbol("comparison"),
+        new RuleSymbol("relativeDate"),
       ],
       postprocess: ([_, operator, date]): TrackWhereInput => ({
         dateAdded: makeRelativeComparison(
           operator.value,
-          date.value.amount,
-          date.value.unit
+          date.amount,
+          date.unit
         ),
       }),
     },
@@ -166,14 +173,16 @@ const grammar = new Grammar(
       symbols: [
         new TokenSymbol("releasedKw"),
         new TokenSymbol("comparison"),
-        new TokenSymbol("absoluteDate"),
+        new RuleSymbol("absoluteDate"),
       ],
       postprocess: ([_, operator, date]): TrackWhereInput => ({
-        dateReleased: makeAbsoluteComparison(
-          operator.value,
-          date.value.date,
-          date.value.unit
-        ),
+        album: {
+          dateReleased: makeAbsoluteComparison(
+            operator.value,
+            date.date,
+            date.unit
+          ),
+        },
       }),
     },
     {
@@ -181,14 +190,16 @@ const grammar = new Grammar(
       symbols: [
         new TokenSymbol("releasedKw"),
         new TokenSymbol("comparison"),
-        new TokenSymbol("relativeDate"),
+        new RuleSymbol("relativeDate"),
       ],
       postprocess: ([_, operator, date]): TrackWhereInput => ({
-        dateReleased: makeRelativeComparison(
-          operator.value,
-          date.value.amount,
-          date.value.unit
-        ),
+        album: {
+          dateReleased: makeRelativeComparison(
+            operator.value,
+            date.amount,
+            date.unit
+          ),
+        },
       }),
     },
     {
@@ -208,16 +219,23 @@ const grammar = new Grammar(
     },
     {
       name: "value",
-      symbols: [new TokenSymbol("labelKw"), new TokenSymbol("labelId")],
-      postprocess: ([_, labelId]): TrackWhereInput => ({
-        labels: { some: { id: labelId.value } },
+      symbols: [new TokenSymbol("labelKw"), new TokenSymbol("number")],
+      postprocess: ([_, id]): TrackWhereInput => ({
+        labels: { some: { id: id.value } },
       }),
     },
     {
       name: "value",
-      symbols: [new TokenSymbol("artistKw"), new TokenSymbol("artistName")],
-      postprocess: ([_, artistName]): TrackWhereInput => ({
-        artist: { contains: artistName.value },
+      symbols: [new TokenSymbol("albumKw"), new TokenSymbol("quotedString")],
+      postprocess: ([_, name]: [unknown, string]): TrackWhereInput => ({
+        album: { name: name.value },
+      }),
+    },
+    {
+      name: "value",
+      symbols: [new TokenSymbol("artistKw"), new TokenSymbol("quotedString")],
+      postprocess: ([_, name]: [unknown, string]): TrackWhereInput => ({
+        artists: { some: { name: name.value } },
       }),
     },
     {
