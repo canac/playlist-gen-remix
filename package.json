@@ -41,7 +41,7 @@
     "remix-utils": "^3.1.0",
     "remix-validated-form": "^4.4.1",
     "tiny-invariant": "^1.2.0",
-    "zod": "^3.14.4",
+    "zod": "^3.22.3",
     "zod-form-data": "^1.2.0"
   },
   "devDependencies": {
